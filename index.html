@@ -503,7 +503,7 @@
   const DEFAULT_PAYS = ['轉帳','現金','信用卡','Line Pay','街口支付','其他'];
 
   let db, txs = [], projects = [];
-  let currentType = 'income', currentTab = 'ledger', statPeriod = 'month';
+  let currentType = 'income', currentTab = 'ledger';
   let editingId = null, editingProjId = null;
 
   let settings = { income_cats: [...DEFAULT_CATS.income], expense_cats: [...DEFAULT_CATS.expense], pays: [...DEFAULT_PAYS] };
@@ -556,23 +556,27 @@
     renderLedger(); renderStats(); renderProjects();
 
     // 若 Supabase 可用，從雲端讀取最新資料（主要來源）
+    // 免費方案可能休眠，最多重試 3 次
     if (!db) { setSyncDot('err'); return; }
-    setSyncDot('loading');
-    try {
-      const [txRes, prRes] = await Promise.all([
-        db.from('transactions').select('*').order('date', { ascending: false }),
-        db.from('projects').select('*').order('created_at', { ascending: false })
-      ]);
-      if (txRes.error || prRes.error || !txRes.data || !prRes.data) {
-        setSyncDot('err'); return;
-      }
-      txs      = txRes.data;
-      projects = prRes.data;
-      saveLocal(); // 存入 localStorage 供本 session 快取用
-      refreshCatFilter(); refreshProjSelect();
-      renderLedger(); renderStats(); renderProjects();
-      setSyncDot('ok');
-    } catch(e) {
+    const delays = [0, 3000, 6000]; // 立刻、3 秒後、6 秒後
+    for (let i = 0; i < delays.length; i++) {
+      if (delays[i] > 0) await new Promise(r => setTimeout(r, delays[i]));
+      setSyncDot('loading');
+      try {
+        const [txRes, prRes] = await Promise.all([
+          db.from('transactions').select('*').order('date', { ascending: false }),
+          db.from('projects').select('*').order('created_at', { ascending: false })
+        ]);
+        if (!txRes.error && !prRes.error && txRes.data !== null && prRes.data !== null) {
+          txs      = txRes.data;
+          projects = prRes.data;
+          saveLocal();
+          refreshCatFilter(); refreshProjSelect();
+          renderLedger(); renderStats(); renderProjects();
+          setSyncDot('ok');
+          return; // 成功，結束重試
+        }
+      } catch(e) {}
       setSyncDot('err');
     }
   }
@@ -820,33 +824,15 @@
   function buildStatsYearSelect() {
     const sel = document.getElementById('stats-year');
     sel.innerHTML = ['2028','2027','2026'].map(y=>`<option value="${y}">${y}年</option>`).join('');
-    sel.value = '2026';
-    buildStatsMonthSelect('2026');
-  }
-
-  function buildStatsMonthSelect(year) {
-    const today = new Date(), sel = document.getElementById('stats-month');
-    const monthOpts = Array.from({length:12},(_,i)=>{
-      const v = `${year}-${pad(i+1)}`;
-      return `<option value="${v}">${i+1}月</option>`;
-    }).join('');
-    sel.innerHTML = `<option value="${year}">全年</option>` + monthOpts;
-    if (year == today.getFullYear()) sel.value = localYM(today);
-    else sel.value = year; // default to 全年 for other years
+    const curYear = String(new Date().getFullYear());
+    sel.value = ['2028','2027','2026'].includes(curYear) ? curYear : '2026';
   }
 
   function onStatsYearChange() {
-    buildStatsMonthSelect(document.getElementById('stats-year').value);
     renderStats();
   }
 
-  function setPeriod(p) {
-    statPeriod = p;
-    document.getElementById('btn-period-month').className = 'period-btn' + (p==='month'?' active':'');
-    document.getElementById('btn-period-year').className  = 'period-btn' + (p==='year'?' active':'');
-    document.getElementById('stats-month-wrap').style.display = p==='month' ? '' : 'none';
-    renderStats();
-  }
+  function setPeriod(p) { renderStats(); }
 
   function renderStats() {
     if (currentTab !== 'stats') return;
