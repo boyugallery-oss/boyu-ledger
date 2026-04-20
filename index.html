@@ -391,6 +391,11 @@
       </div>
     </div>
     <div class="card">
+      <div class="card-title">☁️ 跨裝置同步</div>
+      <p style="font-size:0.8rem;color:#888;margin-bottom:12px">換裝置使用時，點此從雲端拉取最新資料合併到本機</p>
+      <button class="btn-primary" onclick="syncFromCloud()">從雲端同步到此裝置</button>
+    </div>
+    <div class="card">
       <div class="card-title">📤 資料匯出</div>
       <div class="btn-row">
         <button class="btn-secondary" onclick="exportCSV('month')">匯出本月 CSV</button>
@@ -512,7 +517,16 @@
   // ── Init ──────────────────────────────────
   async function init() {
     loadSettings();
-    db = window.supabase.createClient(SB_URL, SB_KEY);
+
+    // Supabase 初始化：CDN 載入失敗時不影響本機功能
+    try {
+      if (window.supabase) {
+        db = window.supabase.createClient(SB_URL, SB_KEY);
+      }
+    } catch(e) {
+      console.warn('Supabase 初始化失敗，使用離線模式:', e);
+    }
+
     setType('income');
     const today = new Date();
     document.getElementById('inp-date').value = localDateStr(today);
@@ -522,24 +536,71 @@
     await loadAll();
   }
 
+  // 合併本機與雲端資料（以 id 為準，保留所有資料）
+  function mergeById(local, remote) {
+    const map = new Map();
+    local.forEach(item  => map.set(String(item.id), item));
+    remote.forEach(item => map.set(String(item.id), item));
+    return Array.from(map.values());
+  }
+
   async function loadAll() {
-    setSyncDot('loading');
-    const [txRes, prRes] = await Promise.all([
-      db.from('transactions').select('*').order('date', { ascending: false }),
-      db.from('projects').select('*').order('created_at', { ascending: false })
-    ]);
-    if (txRes.error || prRes.error) {
-      setSyncDot('err'); showToast('無法連線，使用本機快取');
-      txs      = JSON.parse(localStorage.getItem('boyu_txs')  || '[]');
-      projects = JSON.parse(localStorage.getItem('boyu_prjs') || '[]');
-    } else {
-      setSyncDot('ok');
-      txs = txRes.data; projects = prRes.data;
-      localStorage.setItem('boyu_txs',  JSON.stringify(txs));
-      localStorage.setItem('boyu_prjs', JSON.stringify(projects));
-    }
+    // 先用 localStorage 快速顯示（避免空白閃爍）
+    try {
+      const rawTxs  = localStorage.getItem('boyu_txs');
+      const rawPrjs = localStorage.getItem('boyu_prjs');
+      txs      = rawTxs  ? JSON.parse(rawTxs)  : [];
+      projects = rawPrjs ? JSON.parse(rawPrjs) : [];
+    } catch(e) { txs = []; projects = []; }
     refreshCatFilter(); refreshProjSelect();
     renderLedger(); renderStats(); renderProjects();
+
+    // 若 Supabase 可用，從雲端讀取最新資料（主要來源）
+    if (!db) { setSyncDot('err'); return; }
+    setSyncDot('loading');
+    try {
+      const [txRes, prRes] = await Promise.all([
+        db.from('transactions').select('*').order('date', { ascending: false }),
+        db.from('projects').select('*').order('created_at', { ascending: false })
+      ]);
+      if (txRes.error || prRes.error || !txRes.data || !prRes.data) {
+        setSyncDot('err'); return;
+      }
+      txs      = txRes.data;
+      projects = prRes.data;
+      saveLocal(); // 存入 localStorage 供本 session 快取用
+      refreshCatFilter(); refreshProjSelect();
+      renderLedger(); renderStats(); renderProjects();
+      setSyncDot('ok');
+    } catch(e) {
+      setSyncDot('err');
+    }
+  }
+
+  // 從 Supabase 拉取最新資料（跨裝置同步用，手動觸發）
+  async function syncFromCloud() {
+    if (!db) { showToast('雲端未連線，請確認網路'); return; }
+    showToast('正在從雲端同步…');
+    setSyncDot('loading');
+    try {
+      const [txRes, prRes] = await Promise.all([
+        db.from('transactions').select('*').order('date', { ascending: false }),
+        db.from('projects').select('*').order('created_at', { ascending: false })
+      ]);
+      if (txRes.error || prRes.error) { setSyncDot('err'); showToast('同步失敗，請稍後再試'); return; }
+      if (!txRes.data || !prRes.data) { setSyncDot('err'); showToast('同步失敗，資料異常'); return; }
+
+      // 合併：保留本機獨有（未同步）的項目 + 雲端的更新
+      txs      = mergeById(txs, txRes.data);
+      projects = mergeById(projects, prRes.data);
+      saveLocal();
+      refreshCatFilter(); refreshProjSelect();
+      renderLedger(); renderStats(); renderProjects();
+      setSyncDot('ok');
+      showToast(`同步完成 ✓（共 ${txs.length} 筆記錄）`);
+    } catch(e) {
+      setSyncDot('err'); showToast('同步失敗：' + e.message);
+    }
   }
 
   // ── Helpers ───────────────────────────────
@@ -703,12 +764,14 @@
     document.getElementById('inp-amount').value = '';
     document.getElementById('inp-note').value   = '';
     refreshCatFilter(); renderLedger(); showToast('已記錄 ✓');
-    document.getElementById('btn-submit').disabled = true;
-    // 背景同步 Supabase
-    setSyncDot('loading');
-    const { error } = await db.from('transactions').insert(tx);
-    setSyncDot(error ? 'err' : 'ok');
-    document.getElementById('btn-submit').disabled = false;
+    // 背景同步 Supabase（有網路才執行）
+    if (db) {
+      setSyncDot('loading');
+      try {
+        const { error } = await db.from('transactions').insert(tx);
+        setSyncDot(error ? 'err' : 'ok');
+      } catch(e) { setSyncDot('err'); }
+    }
   }
 
   async function updateTx() {
@@ -720,24 +783,37 @@
     const projId = document.getElementById('inp-project').value || null;
     if (!amount || amount <= 0) { showToast('請輸入金額'); return; }
     const updates = { type: currentType, amount, date, cat, pay, note, project_id: projId };
-    document.getElementById('btn-submit').disabled = true; setSyncDot('loading');
-    const { error } = await db.from('transactions').update(updates).eq('id', editingId);
-    if (error) { setSyncDot('err'); showToast('更新失敗'); }
-    else {
-      setSyncDot('ok');
-      const i = txs.findIndex(t=>t.id===editingId);
-      if (i !== -1) txs[i] = { ...txs[i], ...updates };
-      saveLocal(); cancelEdit(); refreshCatFilter(); renderLedger(); showToast('已更新 ✓');
+
+    // 先更新本機，立即生效
+    const i = txs.findIndex(t=>t.id===editingId);
+    if (i !== -1) txs[i] = { ...txs[i], ...updates };
+    saveLocal(); cancelEdit(); refreshCatFilter(); renderLedger(); showToast('已更新 ✓');
+
+    // 背景同步 Supabase
+    if (db) {
+      setSyncDot('loading');
+      try {
+        const { error } = await db.from('transactions').update(updates).eq('id', editingId);
+        setSyncDot(error ? 'err' : 'ok');
+      } catch(e) { setSyncDot('err'); }
     }
-    document.getElementById('btn-submit').disabled = false;
   }
 
   async function delTx(id) {
     if (!confirm('確定刪除這筆記錄？')) return;
-    setSyncDot('loading');
-    const { error } = await db.from('transactions').delete().eq('id', id);
-    if (error) { setSyncDot('err'); showToast('刪除失敗'); return; }
-    setSyncDot('ok'); txs = txs.filter(t=>t.id!==id); saveLocal(); refreshCatFilter(); renderLedger();
+
+    // 先刪本機，立即生效
+    txs = txs.filter(t=>t.id!==id);
+    saveLocal(); refreshCatFilter(); renderLedger(); showToast('已刪除');
+
+    // 背景同步 Supabase
+    if (db) {
+      setSyncDot('loading');
+      try {
+        const { error } = await db.from('transactions').delete().eq('id', id);
+        setSyncDot(error ? 'err' : 'ok');
+      } catch(e) { setSyncDot('err'); }
+    }
   }
 
   // ── Stats ─────────────────────────────────
@@ -996,15 +1072,23 @@
 
   async function deleteProject() {
     if (!confirm('確定刪除這個專案？相關的交易記錄不會被刪除，只會取消專案標記。')) return;
-    setSyncDot('loading');
-    const { error } = await db.from('projects').delete().eq('id', editingProjId);
-    if (error) { setSyncDot('err'); showToast('刪除失敗'); return; }
-    // 清除相關交易的 project_id
-    await db.from('transactions').update({ project_id: null }).eq('project_id', editingProjId);
-    txs = txs.map(t => t.project_id === editingProjId ? { ...t, project_id: null } : t);
-    projects = projects.filter(p => p.id !== editingProjId);
-    setSyncDot('ok'); saveLocal(); refreshProjSelect(); renderProjects();
+    const deletingId = editingProjId;
+
+    // 先刪本機，立即生效
+    txs = txs.map(t => t.project_id === deletingId ? { ...t, project_id: null } : t);
+    projects = projects.filter(p => p.id !== deletingId);
+    saveLocal(); refreshProjSelect(); renderProjects();
     closeProjectModal(); switchTab('projects'); showToast('專案已刪除');
+
+    // 背景同步 Supabase
+    if (db) {
+      setSyncDot('loading');
+      try {
+        await db.from('transactions').update({ project_id: null }).eq('project_id', deletingId);
+        const { error } = await db.from('projects').delete().eq('id', deletingId);
+        setSyncDot(error ? 'err' : 'ok');
+      } catch(e) { setSyncDot('err'); }
+    }
   }
 
   async function saveProject() {
@@ -1026,20 +1110,34 @@
       contact_info:   document.getElementById('mp-contact-info').value.trim(),
       note:           document.getElementById('mp-note').value.trim(),
     };
-    setSyncDot('loading');
+    // 先存本機，立即生效
     if (editingProjId) {
-      const { error } = await db.from('projects').update(data).eq('id', editingProjId);
-      if (error) { setSyncDot('err'); showToast('更新失敗'); return; }
       const i = projects.findIndex(p=>p.id===editingProjId);
       if (i !== -1) projects[i] = { ...projects[i], ...data };
     } else {
-      const p = { id: Date.now().toString(), ...data };
-      const { error } = await db.from('projects').insert(p);
-      if (error) { setSyncDot('err'); showToast('新增失敗'); return; }
-      projects.unshift(p);
+      data.id = Date.now().toString();
+      data.created_at = new Date().toISOString();
+      projects.unshift(data);
     }
-    setSyncDot('ok'); saveLocal(); refreshProjSelect(); renderProjects(); closeProjectModal();
-    showToast(editingProjId ? '專案已更新 ✓' : '專案已新增 ✓');
+    const savedId = editingProjId || data.id;
+    const isNew   = !editingProjId;
+    saveLocal(); refreshProjSelect(); renderProjects(); closeProjectModal();
+    showToast(isNew ? '專案已新增 ✓' : '專案已更新 ✓');
+
+    // 背景同步 Supabase
+    if (db) {
+      setSyncDot('loading');
+      try {
+        const syncData = isNew ? { ...data } : data;
+        if (!isNew) {
+          const { error } = await db.from('projects').update(syncData).eq('id', savedId);
+          setSyncDot(error ? 'err' : 'ok');
+        } else {
+          const { error } = await db.from('projects').insert(syncData);
+          setSyncDot(error ? 'err' : 'ok');
+        }
+      } catch(e) { setSyncDot('err'); }
+    }
   }
 
   // ── Settings ──────────────────────────────
