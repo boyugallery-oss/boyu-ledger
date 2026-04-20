@@ -339,7 +339,8 @@
 
   <!-- ═══════════════ 專案頁 ═══════════════ -->
   <div class="view" id="view-projects">
-    <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+      <button class="btn-export" onclick="exportProjectsCSV()">CSV</button>
       <button class="btn-primary" style="width:auto;padding:10px 18px" onclick="openProjectModal()">＋ 新增專案</button>
     </div>
     <div id="project-list"></div>
@@ -1177,6 +1178,27 @@
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'),{href:url,download:scope==='month'?`Boyu記帳_${month}.csv`:'Boyu記帳_全部.csv'});
     a.click(); URL.revokeObjectURL(url); showToast('已匯出 CSV ✓');
+  }
+
+  function exportProjectsCSV() {
+    if (!projects.length) { showToast('目前沒有專案資料'); return; }
+    const hdr = '專案名稱,類型,狀態,開始日期,截止日期,報價,付款狀態,付款條件,聯絡人,聯絡方式,備註';
+    const rows = projects.map(p => {
+      const esc = v => `"${(v||'').toString().replace(/"/g,'""')}"`;
+      return [
+        esc(p.name), esc(p.project_type), esc(p.status),
+        p.start_date||'', p.end_date||'',
+        p.quote_amount||0,
+        esc(p.payment_status), esc(p.payment_terms),
+        esc(p.contact_name), esc(p.contact_info),
+        esc(p.note)
+      ].join(',');
+    });
+    const csv  = '\uFEFF' + [hdr, ...rows].join('\n');
+    const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
+    const url  = URL.createObjectURL(blob);
+    const a    = Object.assign(document.createElement('a'), {href:url, download:`Boyu專案_${new Date().toISOString().slice(0,10)}.csv`});
+    a.click(); URL.revokeObjectURL(url); showToast('已匯出專案 CSV ✓');
   }
 
   async function clearAllData() {
