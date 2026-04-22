@@ -1,0 +1,863 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>📁 Boyu 專案管理</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #F7F6F3; color: #1A1A1A; min-height: 100vh; }
+
+    /* ── Header ── */
+    .app-header {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 300; height: 52px;
+      background: rgba(247,246,243,0.92); backdrop-filter: blur(8px);
+      border-bottom: 1px solid #E8E8E4;
+      display: flex; align-items: center; justify-content: space-between; padding: 0 24px;
+    }
+    .header-left { display: flex; align-items: center; gap: 10px; }
+    .app-title { font-size: 0.95rem; font-weight: 700; }
+    .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #CCC; transition: background 0.3s; }
+    .sync-dot.ok { background: #4CAF50; } .sync-dot.err { background: #F44336; }
+    .sync-dot.loading { background: #FF9800; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
+    .search-box { padding: 6px 12px; font-size: 0.8rem; border: 1.5px solid #E0E0E0; border-radius: 8px; background: white; width: 150px; font-family: inherit; outline: none; }
+    .search-box:focus { border-color: #AAA; }
+    .btn-new { padding: 6px 14px; background: #1C1C1C; color: white; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
+    .btn-new:hover { background: #333; }
+
+    /* ── Layout ── */
+    .app-wrap { margin-top: 52px; max-width: 1240px; margin-left: auto; margin-right: auto; padding: 0 28px; }
+
+    /* Desktop: flex + width transition for silky slide */
+    @media (min-width: 860px) {
+      .app-wrap          { display: flex; align-items: flex-start; }
+      .list-col          { flex: 1; min-width: 0; padding: 20px 0 80px; }
+      .app-wrap.open .list-col { padding-right: 12px; }
+      .panel-col         {
+        flex-shrink: 0; width: 0; overflow: hidden;
+        transition: width 0.38s cubic-bezier(0.4,0,0.2,1);
+      }
+      .app-wrap.open .panel-col {
+        width: 50%; border-left: 1px solid #EEEDE9;
+      }
+      .panel-scroll      {
+        width: 100%; height: calc(100vh - 52px); overflow-y: auto;
+        padding: 28px 36px 60px; background: white;
+        position: sticky; top: 52px;
+      }
+
+      /* When panel open (or closing): show name / status / 發票 / priority / category */
+      .app-wrap.open .table-head,
+      .app-wrap.was-open .table-head { grid-template-columns: 1fr 92px 66px 72px 70px; }
+      .app-wrap.open .table-row,
+      .app-wrap.was-open .table-row  { grid-template-columns: 1fr 92px 66px 72px 70px; }
+      .app-wrap.open .th:nth-child(4),
+      .app-wrap.open .th:nth-child(5),
+      .app-wrap.open .th:nth-child(7),
+      .app-wrap.was-open .th:nth-child(4),
+      .app-wrap.was-open .th:nth-child(5),
+      .app-wrap.was-open .th:nth-child(7)          { display: none; }
+      .app-wrap.open .table-row > .td:nth-child(4),
+      .app-wrap.open .table-row > .td:nth-child(5),
+      .app-wrap.open .table-row > .td:nth-child(7),
+      .app-wrap.was-open .table-row > .td:nth-child(4),
+      .app-wrap.was-open .table-row > .td:nth-child(5),
+      .app-wrap.was-open .table-row > .td:nth-child(7) { display: none; }
+    }
+
+    /* Mobile: full-screen slide */
+    @media (max-width: 859px) {
+      .app-wrap  { display: block; padding: 12px 12px 80px; }
+      .panel-col { position: fixed; top: 52px; right: 0; bottom: 0; width: 100%; background: white; z-index: 400; transform: translateX(100%); transition: transform 0.38s cubic-bezier(0.4,0,0.2,1); overflow-y: auto; }
+      .app-wrap.open .panel-col { transform: translateX(0); }
+      .panel-scroll { padding: 20px 16px 60px; }
+      .mob-backdrop { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.25); z-index: 399; }
+      .app-wrap.open .mob-backdrop { display: block; }
+    }
+
+    /* ── Status group ── */
+    .status-group { margin-bottom: 24px; }
+    .group-header { display: flex; align-items: center; gap: 8px; padding: 4px 0 8px; cursor: pointer; user-select: none; }
+    .group-arrow { font-size: 0.58rem; color: #AAA; transition: transform 0.18s; display: inline-block; }
+    .group-arrow.collapsed { transform: rotate(-90deg); }
+    .group-count { font-size: 0.85rem; color: #AAA; }
+    .pill { display: inline-flex; align-items: center; gap: 5px; padding: 4px 12px; border-radius: 20px; font-size: 0.85rem; font-weight: 500; }
+    .pill-dot { width: 7px; height: 7px; border-radius: 50%; }
+    .pill-接洽中{background:#FFF0E0;color:#C15000}.pill-dot-接洽中{background:#FF9800}
+    .pill-進行中{background:#FDFAEC;color:#A0780A}.pill-dot-進行中{background:#E8B800}
+    .pill-暫停{background:#F0ECFF;color:#6B3EBB}.pill-dot-暫停{background:#9B74D7}
+    .pill-已完成{background:#E6F6EC;color:#237843}.pill-dot-已完成{background:#3DB660}
+
+    /* ── Table ── */
+    .proj-table { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
+    .table-head { display: grid; grid-template-columns: 2fr 92px 66px 218px 108px 72px 1fr 70px; padding: 0 10px; border-bottom: 1px solid #F0F0EC; }
+    .th { padding: 8px 7px; font-size: 0.78rem; color: #BBB; font-weight: 500; }
+    .table-row {
+      display: grid; grid-template-columns: 2fr 92px 66px 218px 108px 72px 1fr 70px;
+      padding: 0 10px; border-bottom: 1px solid #F5F5F2;
+      cursor: pointer; transition: background 0.1s; align-items: center; min-height: 48px;
+    }
+    .table-row:last-child { border-bottom: none; }
+    .table-row:hover { background: #FAFAF8; }
+    .table-row.selected { background: #F0F0EE; }
+    .td { padding: 9px 7px; font-size: 0.9rem; }
+    /* 欄間距調整：狀態↔發票=1X(8px)，發票↔日期=Deadline↔後=2X(16px) */
+    .td:nth-child(2), .th:nth-child(2) { padding-right: 4px; }
+    .td:nth-child(3), .th:nth-child(3) { padding-left: 4px; padding-right: 8px; }
+    .td:nth-child(4), .th:nth-child(4) { padding-left: 16px; }
+    .td:nth-child(5), .th:nth-child(5) { padding-left: 16px; }
+    .td-name { display: flex; align-items: center; gap: 7px; font-weight: 500; }
+    .td-icon { font-size: 0.85rem; opacity: 0.35; flex-shrink: 0; }
+    .td-num  { font-size: 0.72rem; color: #CCC; flex-shrink: 0; }
+    .td-text { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .td-name-edit {
+      display: inline-block; cursor: text;
+      font-size: inherit; font-weight: inherit; color: inherit; font-family: inherit;
+      outline: none; border-radius: 4px; padding: 1px 2px;
+      white-space: nowrap; max-width: 100%;
+    }
+    .td-name-edit:focus { background: #EEEEED; padding: 1px 6px; }
+    .td-date { font-size: 0.82rem; color: #666; white-space: nowrap; }
+    .td-note { font-size: 0.8rem; color: #AAA; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    /* Badges */
+    .badge { display: inline-flex; align-items: center; gap: 4px; padding: 3px 11px; border-radius: 20px; font-size: 0.8rem; font-weight: 500; white-space: nowrap; cursor: pointer; transition: opacity 0.1s; }
+    .badge:hover { opacity: 0.8; }
+    .b-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+    .b-接洽中{background:#FFF0E0;color:#C15000} .bd-接洽中{background:#FF9800}
+    .b-進行中{background:#FDFAEC;color:#A0780A} .bd-進行中{background:#E8B800}
+    .b-暫停{background:#F0ECFF;color:#6B3EBB}   .bd-暫停{background:#9B74D7}
+    .b-已完成{background:#E6F6EC;color:#237843}  .bd-已完成{background:#3DB660}
+    .b-pri-低{background:#E6F6EC;color:#237843}
+    .b-pri-中{background:#FDFAEC;color:#A0780A}
+    .b-pri-高{background:#FFEBEE;color:#C62828}
+    .b-cat-藝術{background:#EBEBEA;color:#3A3A3A}
+    .b-cat-設計{background:#EBEBEA;color:#3A3A3A}
+    .b-cat-空間{background:#EBEBEA;color:#3A3A3A}
+    .b-cat-其他{background:#EBEBEA;color:#3A3A3A}
+    .cat-tag { border-radius: 3px !important; }
+    .b-task-未開始{background:#F0F0F0;color:#888}
+    .b-task-進行中{background:#FDFAEC;color:#A0780A}
+    .b-task-已完成{background:#E6F6EC;color:#237843}
+    .b-pay-未收款{background:#FFEBEE;color:#C62828}
+    .b-pay-已收訂金{background:#FFF0E0;color:#C15000}
+    .b-pay-部分付款{background:#FFF0E0;color:#C15000}
+    .b-pay-已結清{background:#E6F6EC;color:#237843}
+    .b-inv-未開{background:#FFEBEE;color:#C62828}
+    .b-inv-已寄出{background:#E3F2FD;color:#1565C0}
+    .gcal-btn { background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; display: inline-flex; align-items: center; opacity: 0.55; transition: opacity 0.15s; flex-shrink: 0; }
+    .gcal-btn:hover { opacity: 1; background: #E8F0FE; }
+
+    .btn-add-row {
+      display: flex; align-items: center; gap: 5px; padding: 9px 20px;
+      font-size: 0.84rem; color: #CCC; background: none; border: none;
+      cursor: pointer; font-family: inherit; transition: color 0.15s; width: 100%; text-align: left;
+    }
+    .btn-add-row:hover { color: #555; background: #FAFAF8; }
+
+    /* ── Date picker dropdown ── */
+    .date-picker-dd { min-width: 230px; }
+    .dp-title { font-size: 0.7rem; color: #AAA; font-weight: 600; padding: 4px 8px 6px; letter-spacing: 0.05em; }
+    .dp-row { padding: 3px 8px; }
+    .dp-label { font-size: 0.7rem; color: #999; display: block; margin-bottom: 3px; }
+    .dp-row input[type="date"] { width: 100%; border: 1.5px solid #E5E5E5; border-radius: 7px; padding: 7px 9px; font-size: 0.83rem; font-family: inherit; outline: none; color: #1A1A1A; background: white; -webkit-appearance: none; }
+    .dp-row input[type="date"]:focus { border-color: #999; }
+    .dp-actions { display: flex; justify-content: flex-end; gap: 6px; padding: 8px 8px 4px; }
+    .dp-btn-clear   { background: none; border: 1.5px solid #E5E5E5; border-radius: 7px; padding: 5px 12px; font-size: 0.76rem; cursor: pointer; color: #AAA; font-family: inherit; }
+    .dp-btn-confirm { background: #1C1C1C; color: white; border: none; border-radius: 7px; padding: 5px 14px; font-size: 0.76rem; cursor: pointer; font-family: inherit; font-weight: 600; }
+
+    /* ── Inline dropdown ── */
+    .inline-dd {
+      position: fixed; background: white; border: 1px solid #E5E5E2;
+      border-radius: 10px; box-shadow: 0 6px 24px rgba(0,0,0,0.13);
+      padding: 6px; min-width: 150px; z-index: 1000;
+    }
+    .dd-section { font-size: 0.65rem; color: #BBB; padding: 5px 8px 2px; font-weight: 600; letter-spacing: 0.06em; }
+    .dd-item { padding: 5px 8px; border-radius: 6px; cursor: pointer; transition: background 0.1s; }
+    .dd-item:hover { background: #F5F5F3; }
+    .dd-sep { height: 1px; background: #F0F0EC; margin: 4px 0; }
+
+    /* ── Detail panel ── */
+    .panel-close-btn { display: flex; align-items: center; gap: 5px; background: none; border: none; cursor: pointer; color: #AAA; font-size: 0.76rem; padding: 4px 8px; border-radius: 6px; font-family: inherit; }
+    .panel-close-btn:hover { background: #F0F0EE; color: #333; }
+    .panel-edit-btn { background: none; border: 1.5px solid #E5E5E2; cursor: pointer; font-size: 0.72rem; color: #666; font-family: inherit; padding: 4px 10px; border-radius: 7px; }
+    .panel-edit-btn:hover { background: #F5F5F3; }
+    .panel-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 18px; }
+    .panel-title { font-size: 1.4rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; }
+    .panel-sub { font-size: 0.73rem; color: #AAA; display: flex; align-items: center; gap: 6px; margin-bottom: 18px; }
+
+    .prop-row { display: flex; align-items: center; padding: 5px 0; border-bottom: 1px solid #F5F5F2; min-height: 34px; }
+    .prop-row:last-child { border-bottom: none; }
+    .prop-label { font-size: 0.74rem; color: #AAA; width: 106px; flex-shrink: 0; display: flex; align-items: center; gap: 5px; }
+    .prop-value { font-size: 0.83rem; flex: 1; }
+    .prop-plain { font-size: 0.83rem; color: #1A1A1A; }
+
+    .section-hd { font-size: 0.92rem; font-weight: 600; margin: 22px 0 10px; display: flex; align-items: center; gap: 6px; }
+
+    /* tasks */
+    .task-tbl { border: 1px solid #EEEDE9; border-radius: 8px; overflow: hidden; margin-bottom: 6px; }
+    .task-head { display: grid; grid-template-columns: 1fr 100px 1fr 148px; border-bottom: 1px solid #EEEDE9; background: #FAFAF8; padding: 0 10px; }
+    .task-th { padding: 6px 8px; font-size: 0.72rem; color: #BBB; font-weight: 500; }
+    .task-row { display: grid; grid-template-columns: 1fr 100px 1fr 148px; border-bottom: 1px solid #F5F5F2; align-items: center; min-height: 36px; padding: 0 10px; }
+    .task-date-cell { padding: 3px 8px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .task-date-text { font-size: 0.78rem; color: #666; white-space: nowrap; }
+    .task-row:last-child { border-bottom: none; }
+    .task-row:hover { background: #FAFAF8; }
+    .task-name-cell { display: flex; align-items: center; gap: 5px; padding: 3px 8px; }
+    .task-icon-sm { font-size: 0.75rem; opacity: 0.3; }
+    .task-name-input { border: none; background: none; font-size: 0.82rem; color: #1A1A1A; font-family: inherit; outline: none; width: 100%; }
+    .task-name-input:focus { background: #F7F6F3; border-radius: 3px; padding: 1px 4px; }
+    .task-note-input { border: none; background: none; font-size: 0.78rem; color: #888; font-family: inherit; outline: none; width: 100%; }
+    .task-note-input:focus { background: #F7F6F3; border-radius: 3px; padding: 1px 4px; color: #1A1A1A; }
+    .task-note-cell { padding: 3px 8px; }
+    .task-st-cell { padding: 3px 8px; display: flex; align-items: center; gap: 5px; }
+    .task-del { background: none; border: none; cursor: pointer; color: #DDD; font-size: 0.72rem; padding: 2px; opacity: 0; transition: opacity 0.1s; }
+    .task-row:hover .task-del { opacity: 1; }
+    .task-del:hover { color: #E53935; }
+    .btn-add-task { display: flex; align-items: center; gap: 5px; padding: 7px 10px; font-size: 0.75rem; color: #BBB; background: none; border: none; cursor: pointer; font-family: inherit; }
+    .btn-add-task:hover { color: #555; }
+
+    /* note */
+    .note-ta { width: 100%; border: 1.5px solid #EEEDE9; border-radius: 8px; padding: 10px 12px; font-size: 0.82rem; color: #1A1A1A; font-family: inherit; resize: vertical; min-height: 88px; outline: none; background: #FAFAF8; line-height: 1.6; }
+    .note-ta:focus { border-color: #CCC; background: white; }
+    .btn-save-note { margin-top: 8px; padding: 8px 16px; background: #1C1C1C; color: white; border: none; border-radius: 8px; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .panel-del { margin-top: 20px; padding-top: 16px; border-top: 1px solid #F0F0EC; }
+    .btn-del { padding: 8px 14px; background: none; border: 1.5px solid #FFCDD2; border-radius: 8px; color: #C62828; font-size: 0.78rem; cursor: pointer; font-family: inherit; }
+
+    /* ── Modal ── */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.38); z-index: 600; align-items: flex-end; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal-sheet { background: white; border-radius: 20px 20px 0 0; padding: 22px 20px; width: 100%; max-width: 700px; max-height: 92vh; overflow-y: auto; }
+    .modal-hd { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+    .modal-ttl { font-size: 0.95rem; font-weight: 600; }
+    .btn-x { background: none; border: none; font-size: 0.95rem; cursor: pointer; color: #AAA; }
+    .fg { display: flex; flex-direction: column; gap: 4px; margin-bottom: 11px; }
+    .fl { font-size: 0.73rem; color: #777; }
+    input[type="text"],input[type="date"],input[type="number"],select,textarea {
+      border: 1.5px solid #E5E5E5; border-radius: 8px; padding: 8px 10px;
+      font-size: 0.83rem; color: #1A1A1A; background: white; width: 100%;
+      outline: none; font-family: inherit; -webkit-appearance: none;
+    }
+    input:focus,select:focus,textarea:focus { border-color: #999; }
+    textarea { resize: vertical; min-height: 64px; }
+    .fgrid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 11px; }
+    .fgrid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 11px; }
+    .fsec { font-size: 0.66rem; font-weight: 600; color: #BBB; letter-spacing: 0.08em; margin: 12px 0 9px; }
+    .btn-p { width: 100%; padding: 12px; background: #1C1C1C; color: white; border: none; border-radius: 10px; font-size: 0.88rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+    .btn-p:hover { background: #333; }
+
+    /* ── Toast ── */
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(20px); background: #1C1C1C; color: white; padding: 8px 18px; border-radius: 20px; font-size: 0.8rem; opacity: 0; pointer-events: none; transition: all 0.24s; z-index: 999; white-space: nowrap; }
+    #toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+    .empty { text-align: center; color: #CCC; padding: 22px 0; font-size: 0.8rem; }
+
+    @media (max-width: 640px) {
+      .table-head { grid-template-columns: 1fr 88px; }
+      .table-head .th:nth-child(n+3) { display: none; }
+      .table-row { grid-template-columns: 1fr 88px; }
+      .table-row > .td:nth-child(n+3) { display: none; }
+      .fgrid2,.fgrid3 { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="app-header">
+  <div class="header-left">
+    <span class="app-title">📁 專案管理</span>
+    <div class="sync-dot loading" id="sync-dot"></div>
+  </div>
+  <div style="display:flex;align-items:center;gap:10px">
+    <input class="search-box" type="text" id="search-input" placeholder="搜尋…" oninput="renderAll()">
+    <button class="btn-new" onclick="openModal()">＋ 新增專案</button>
+  </div>
+</div>
+
+<div class="app-wrap" id="app-wrap">
+  <div class="list-col">
+    <div id="groups-container"></div>
+  </div>
+  <div class="panel-col" id="panel-col">
+    <div class="panel-scroll" id="panel-scroll"></div>
+  </div>
+  <div class="mob-backdrop" onclick="closePanel()"></div>
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal-sheet">
+    <div class="modal-hd"><div class="modal-ttl" id="modal-ttl">新增專案</div><button class="btn-x" onclick="closeModal()">✕</button></div>
+
+    <div class="fsec">基本資訊</div>
+    <div class="fg"><span class="fl">專案名稱 *</span><input type="text" id="m-name" placeholder="例：故宮書法展"></div>
+    <div class="fg"><span class="fl">客戶 / 單位</span><input type="text" id="m-client" placeholder="例：國立故宮博物院"></div>
+    <div class="fgrid3">
+      <div class="fg" style="margin-bottom:0"><span class="fl">類別</span><select id="m-category"><option>藝術</option><option>設計</option><option>空間</option><option>其他</option></select></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">狀態</span><select id="m-status"><option>接洽中</option><option>進行中</option><option>暫停</option><option>已完成</option></select></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">優先級</span><select id="m-priority"><option>低</option><option selected>中</option><option>高</option></select></div>
+    </div>
+
+    <div class="fsec">時程</div>
+    <div class="fgrid2">
+      <div class="fg" style="margin-bottom:0"><span class="fl">開始日期</span><input type="date" id="m-start"></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">截止日期</span><input type="date" id="m-end"></div>
+    </div>
+    <div class="fg" style="margin-top:10px"><span class="fl">Deadline（重要截止）</span><input type="date" id="m-deadline"></div>
+
+    <div class="fsec">財務</div>
+    <div class="fgrid2">
+      <div class="fg" style="margin-bottom:0"><span class="fl">報價金額（元）</span><input type="number" id="m-quote" placeholder="0" min="0" inputmode="numeric"></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">付款狀態</span><select id="m-pay-status"><option>未收款</option><option>已收訂金</option><option>部分付款</option><option>已結清</option></select></div>
+    </div>
+
+    <div class="fsec">聯絡資訊</div>
+    <div class="fgrid2">
+      <div class="fg" style="margin-bottom:0"><span class="fl">聯絡窗口</span><input type="text" id="m-contact-name" placeholder="姓名"></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">聯絡方式</span><input type="text" id="m-contact-info" placeholder="電話 / Email / Line"></div>
+    </div>
+
+    <div class="fsec">備註</div>
+    <div class="fg"><textarea id="m-note" placeholder="專案說明…" style="min-height:52px"></textarea></div>
+    <button class="btn-p" onclick="saveCase()">儲存專案</button>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const SB_URL = 'https://dwbxuhqhxtvsryzzqsgp.supabase.co';
+  const SB_KEY = 'sb_publishable_zmCiLOJx3GxYOxda_nYKMQ_DgcR9Srb';
+
+  const STATUS_ORDER  = ['接洽中','進行中','暫停','已完成'];
+  const TASK_STATUSES = ['未開始','進行中','已完成'];
+  const CAT_PREFIX    = { '藝術':'A','設計':'D','空間':'S','其他':'O' };
+
+  let db, cases = [];
+  let editingId = null, viewingId = null;
+  let collapsed = {};
+
+  // ── Init ──────────────────────────────────
+  async function init() {
+    try { if (window.supabase) db = window.supabase.createClient(SB_URL, SB_KEY); } catch(e) {}
+    try { const r = localStorage.getItem('boyu_cases'); cases = r ? JSON.parse(r) : []; } catch(e) { cases = []; }
+    renderAll();
+    await loadFromCloud();
+  }
+
+  async function loadFromCloud() {
+    if (!db) { setSyncDot('err'); return; }
+    for (const delay of [0,3000,6000]) {
+      if (delay) await new Promise(r => setTimeout(r, delay));
+      setSyncDot('loading');
+      try {
+        const { data, error } = await db.from('cases').select('*').order('created_at',{ascending:false});
+        if (!error && data) { cases = data; saveLocal(); renderAll(); if (viewingId) renderPanel(); setSyncDot('ok'); return; }
+      } catch(e) {}
+      setSyncDot('err');
+    }
+  }
+
+  function saveLocal() { localStorage.setItem('boyu_cases', JSON.stringify(cases)); }
+  function setSyncDot(s) { document.getElementById('sync-dot').className = 'sync-dot '+s; }
+  function showToast(msg) {
+    const el = document.getElementById('toast'); el.textContent = msg;
+    el.classList.add('show'); setTimeout(()=>el.classList.remove('show'), 2200);
+  }
+  function esc(s) { return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function fmtDate(d) { if(!d)return''; const[y,m,day]=d.split('-'); return `${y}年${+m}月${+day}日`; }
+  function parseTasks(raw) { try { return JSON.parse(raw||'[]'); } catch { return []; } }
+  function caseNumber(c) {
+    const p = CAT_PREFIX[c.category]||'P';
+    const same = [...cases].filter(x=>x.category===c.category).sort((a,b)=>(a.created_at||'').localeCompare(b.created_at||''));
+    return p + String(same.findIndex(x=>x.id===c.id)+1).padStart(3,'0');
+  }
+
+  // ── Inline dropdown ───────────────────────
+  let _ddAnchor = null;
+
+  function showInlineDD(anchor, items, onSelect) {
+    if (_ddAnchor === anchor) { closeInlineDD(); return; }
+    closeInlineDD();
+    _ddAnchor = anchor;
+    const dd = document.createElement('div');
+    dd.className = 'inline-dd'; dd.id = 'inline-dd';
+    dd.innerHTML = items.map(it => {
+      if (it.sep) return '<div class="dd-sep"></div>';
+      if (it.header) return `<div class="dd-section">${it.header}</div>`;
+      return `<div class="dd-item" data-val="${it.value}">
+        <span class="badge ${it.cls}">
+          ${it.dot ? `<span class="b-dot ${it.dot}"></span>` : ''}${it.label}
+        </span>
+      </div>`;
+    }).join('');
+
+    // Position
+    const rect = anchor.getBoundingClientRect();
+    const top  = rect.bottom + 4;
+    const left = Math.min(rect.left, window.innerWidth - 180);
+    dd.style.cssText = `top:${top}px;left:${left}px`;
+    document.body.appendChild(dd);
+
+    dd.querySelectorAll('.dd-item').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        onSelect(el.dataset.val);
+        closeInlineDD();
+      });
+    });
+
+    setTimeout(() => document.addEventListener('click', onOutside), 10);
+  }
+
+  function onOutside(e) { if (!document.getElementById('inline-dd')?.contains(e.target)) closeInlineDD(); }
+  function closeInlineDD() { _ddAnchor = null; document.getElementById('inline-dd')?.remove(); document.removeEventListener('click', onOutside); }
+
+  // ── Date pickers ──────────────────────────
+  function showDateRangePicker(anchor, caseId) {
+    const c = cases.find(x=>x.id===caseId); if(!c) return;
+    if (_ddAnchor === anchor) { closeInlineDD(); return; }
+    closeInlineDD();
+    _ddAnchor = anchor;
+    const dd = document.createElement('div');
+    dd.className = 'inline-dd date-picker-dd'; dd.id = 'inline-dd';
+    dd.innerHTML = `
+      <div class="dp-title">📅 日期範圍</div>
+      <div class="dp-row"><span class="dp-label">開始日期</span><input type="date" id="dp-start" value="${c.start_date||''}"></div>
+      <div class="dp-row"><span class="dp-label">截止日期</span><input type="date" id="dp-end" value="${c.end_date||''}"></div>
+      <div class="dp-actions">
+        <button class="dp-btn-clear" onclick="saveDateRange('${caseId}','','')">清除</button>
+        <button class="dp-btn-confirm" onclick="saveDateRange('${caseId}',document.getElementById('dp-start').value,document.getElementById('dp-end').value)">確定</button>
+      </div>`;
+    positionDD(dd, anchor);
+    document.body.appendChild(dd);
+    setTimeout(() => document.addEventListener('click', onOutside), 10);
+  }
+
+  function showDeadlinePicker(anchor, caseId) {
+    const c = cases.find(x=>x.id===caseId); if(!c) return;
+    if (_ddAnchor === anchor) { closeInlineDD(); return; }
+    closeInlineDD();
+    _ddAnchor = anchor;
+    const dd = document.createElement('div');
+    dd.className = 'inline-dd date-picker-dd'; dd.id = 'inline-dd';
+    dd.innerHTML = `
+      <div class="dp-title">⚠ Deadline</div>
+      <div class="dp-row"><input type="date" id="dp-dl" value="${c.deadline||''}"></div>
+      <div class="dp-actions">
+        <button class="dp-btn-clear" onclick="updateField('${caseId}','deadline','');closeInlineDD()">清除</button>
+        <button class="dp-btn-confirm" onclick="updateField('${caseId}','deadline',document.getElementById('dp-dl').value);closeInlineDD()">確定</button>
+      </div>`;
+    positionDD(dd, anchor);
+    document.body.appendChild(dd);
+    setTimeout(() => document.addEventListener('click', onOutside), 10);
+  }
+
+  function saveDateRange(caseId, start, end) {
+    const c = cases.find(x=>x.id===caseId); if(!c) return;
+    c.start_date = start; c.end_date = end;
+    saveLocal(); renderAll();
+    if (viewingId===caseId) renderPanel();
+    closeInlineDD();
+    if(db){ setSyncDot('loading'); db.from('cases').update({start_date:start,end_date:end}).eq('id',caseId).then(({error})=>setSyncDot(error?'err':'ok')); }
+  }
+
+  function positionDD(dd, anchor) {
+    const rect = anchor.getBoundingClientRect();
+    dd.style.top  = (rect.bottom + 4) + 'px';
+    dd.style.left = Math.min(rect.left, window.innerWidth - 250) + 'px';
+  }
+
+  const STATUS_DD_ITEMS = [
+    {header:'狀態'},{value:'接洽中',cls:'b-接洽中',dot:'bd-接洽中',label:'接洽中'},
+    {value:'進行中',cls:'b-進行中',dot:'bd-進行中',label:'進行中'},
+    {value:'暫停',  cls:'b-暫停',  dot:'bd-暫停',  label:'暫停'},
+    {value:'已完成',cls:'b-已完成',dot:'bd-已完成',label:'已完成'},
+  ];
+  const PRIORITY_DD_ITEMS = [
+    {header:'優先級'},{value:'低',cls:'b-pri-低',label:'低'},{value:'中',cls:'b-pri-中',label:'中'},{value:'高',cls:'b-pri-高',label:'高'},
+  ];
+  const CAT_DD_ITEMS = [
+    {header:'類別'},{value:'藝術',cls:'b-cat-藝術 cat-tag',label:'藝術'},{value:'設計',cls:'b-cat-設計 cat-tag',label:'設計'},
+    {value:'空間',cls:'b-cat-空間 cat-tag',label:'空間'},{value:'其他',cls:'b-cat-其他 cat-tag',label:'其他'},
+  ];
+  const INVOICE_DD_ITEMS = [
+    {header:'發票狀態'},
+    {value:'未開',   cls:'b-inv-未開',   dot:'', label:'未開'},
+    {value:'已寄出', cls:'b-inv-已寄出', dot:'', label:'已寄出'},
+    {sep:true},
+    {value:'', cls:'', label:'清除'},
+  ];
+  const PAY_DD_ITEMS = [
+    {header:'付款狀態'},{value:'未收款',cls:'b-pay-未收款',label:'未收款'},{value:'已收訂金',cls:'b-pay-已收訂金',label:'已收訂金'},
+    {value:'部分付款',cls:'b-pay-部分付款',label:'部分付款'},{value:'已結清',cls:'b-pay-已結清',label:'已結清'},
+  ];
+  const TASK_STATUS_ITEMS = [
+    {header:'狀態'},{value:'未開始',cls:'b-task-未開始',label:'未開始'},
+    {value:'進行中',cls:'b-task-進行中',label:'進行中'},{value:'已完成',cls:'b-task-已完成',label:'已完成'},
+  ];
+
+  function updateCaseName(id, name) {
+    name = name.trim(); if (!name) return;
+    updateField(id, 'name', name);
+  }
+
+  async function updateField(id, field, value) {
+    const c = cases.find(x=>x.id===id); if (!c) return;
+    c[field] = value; saveLocal(); renderAll();
+    if (viewingId===id) renderPanel();
+    if (db) { setSyncDot('loading'); try { const{error}=await db.from('cases').update({[field]:value}).eq('id',id); setSyncDot(error?'err':'ok'); } catch(e){setSyncDot('err');} }
+  }
+
+  // ── Render all ────────────────────────────
+  function renderAll() {
+    const q = document.getElementById('search-input').value.trim().toLowerCase();
+    let list = q ? cases.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.client||'').toLowerCase().includes(q)) : [...cases];
+    const con = document.getElementById('groups-container');
+    if (!cases.length) { con.innerHTML='<div class="empty" style="margin-top:60px">還沒有專案<br><small>點右上角「＋ 新增專案」開始</small></div>'; return; }
+    con.innerHTML = STATUS_ORDER.map(s => {
+      const grp = list.filter(c=>c.status===s);
+      const col = collapsed[s];
+      return `<div class="status-group">
+        <div class="group-header" onclick="toggleGroup('${s}')">
+          <span class="group-arrow${col?' collapsed':''}">▼</span>
+          <span class="pill pill-${s}"><span class="pill-dot pill-dot-${s}"></span>${s}</span>
+          <span class="group-count">${grp.length}</span>
+        </div>
+        ${col ? '' : renderGroupBody(s,grp)}
+      </div>`;
+    }).join('');
+  }
+
+  function renderGroupBody(status, group) {
+    const rows = group.map(c => {
+      const num  = caseNumber(c);
+      const date = c.start_date && c.end_date ? `${fmtDate(c.start_date)} → ${fmtDate(c.end_date)}` : fmtDate(c.start_date)||'';
+      const pri  = c.priority||'中';
+      const sel  = viewingId===c.id ? ' selected' : '';
+      return `<div class="table-row${sel}" onclick="openPanel('${c.id}')">
+        <div class="td td-name">
+          <span class="td-icon">📄</span>
+          <span class="td-text">${esc(c.name)}</span>
+        </div>
+        <div class="td">
+          <span class="badge b-${status}" onclick="event.stopPropagation();showInlineDD(this,STATUS_DD_ITEMS,v=>updateField('${c.id}','status',v))">
+            <span class="b-dot bd-${status}"></span>${status}
+          </span>
+        </div>
+        <div class="td" onclick="event.stopPropagation();showInlineDD(this,INVOICE_DD_ITEMS,v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
+          ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD;font-size:0.8rem">—</span>'}
+        </div>
+        <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDateRangePicker(this,'${c.id}')">${date||'<span style="color:#DDD">選擇日期</span>'}</div>
+        <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDeadlinePicker(this,'${c.id}')">${fmtDate(c.deadline)||'<span style="color:#DDD">—</span>'}</div>
+        <div class="td">
+          <span class="badge b-pri-${pri}" onclick="event.stopPropagation();showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${pri}</span>
+        </div>
+        <div class="td td-note">${esc(c.note||'')}</div>
+        <div class="td">
+          <span class="badge cat-tag b-cat-${c.category||'其他'}" onclick="event.stopPropagation();showInlineDD(this,CAT_DD_ITEMS,v=>updateField('${c.id}','category',v))">${c.category||'其他'}</span>
+        </div>
+      </div>`;
+    }).join('');
+
+    return `<div class="proj-table">
+      <div class="table-head">
+        <div class="th">🗒 專案名稱</div><div class="th">✦ 狀態</div>
+        <div class="th">🧾 發票</div>
+        <div class="th">📅 日期</div><div class="th">⚠ Deadline</div>
+        <div class="th">◎ 優先級</div><div class="th">≡ 備註</div><div class="th">類別</div>
+      </div>
+      ${rows||'<div class="empty" style="padding:16px 0">此分類無專案</div>'}
+      <button class="btn-add-row" onclick="openModalForStatus('${status}')">＋ 新專案</button>
+    </div>`;
+  }
+
+  function toggleGroup(s) { collapsed[s]=!collapsed[s]; renderAll(); }
+
+  // ── Panel ─────────────────────────────────
+  function openPanel(id) {
+    if (viewingId === id) { closePanel(); return; }
+    viewingId = id; renderAll(); renderPanel();
+    document.getElementById('app-wrap').classList.add('open');
+  }
+  function closePanel() {
+    viewingId = null;
+    const wrap = document.getElementById('app-wrap');
+    wrap.classList.remove('open');
+    wrap.classList.add('was-open');
+    setTimeout(() => {
+      wrap.classList.remove('was-open');
+      renderAll();
+    }, 400);
+  }
+
+  function renderPanel() {
+    const c = cases.find(x=>x.id===viewingId); if (!c) return;
+    const num = caseNumber(c);
+    const tasks = parseTasks(c.tasks);
+
+    const taskRows = tasks.map((t,i) => `
+      <div class="task-row">
+        <div class="task-name-cell">
+          <span class="task-icon-sm">📋</span>
+          <input class="task-name-input" value="${esc(t.name)}" onblur="updateTaskName(${i},this.value)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
+        </div>
+        <div class="task-st-cell">
+          <span class="badge b-task-${t.status}" onclick="showInlineDD(this,TASK_STATUS_ITEMS,v=>setTaskStatus(${i},v))">${t.status}</span>
+          <button class="task-del" onclick="deleteTask(${i})">✕</button>
+        </div>
+        <div class="task-note-cell">
+          <input class="task-note-input" value="${esc(t.note||'')}" placeholder="備註…" onblur="updateTaskNote(${i},this.value)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
+        </div>
+        <div class="task-date-cell" onclick="event.stopPropagation();showTaskDatePicker(this,${i})">
+          <span class="task-date-text">${t.date ? fmtDate(t.date) : '<span style="color:#DDD">選擇日期</span>'}</span>
+          ${t.date?`<button class="gcal-btn" onclick="event.stopPropagation();addTaskToGCal(${i})" title="加入 Google 日曆" style="padding:1px 2px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
+        </div>
+      </div>`).join('');
+
+    document.getElementById('panel-scroll').innerHTML = `
+      <div class="panel-top">
+        <button class="panel-close-btn" onclick="closePanel()">← 收起</button>
+        <button class="panel-edit-btn" onclick="openModal('${c.id}')">✎ 編輯屬性</button>
+      </div>
+      <div class="panel-title">${esc(c.name)}</div>
+      <div class="panel-sub">
+        <span class="badge cat-tag b-cat-${c.category||'其他'}" onclick="showInlineDD(this,CAT_DD_ITEMS,v=>updateField('${c.id}','category',v))">${c.category||'其他'}</span>
+      </div>
+
+      <div>
+        <div class="prop-row">
+          <div class="prop-label">✦ 狀態</div>
+          <div class="prop-value"><span class="badge b-${c.status}" onclick="showInlineDD(this,STATUS_DD_ITEMS,v=>updateField('${c.id}','status',v))"><span class="b-dot bd-${c.status}"></span>${c.status}</span></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">🧾 發票</div>
+          <div class="prop-value" onclick="showInlineDD(this,INVOICE_DD_ITEMS,v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
+            ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD">點擊設定</span>'}
+          </div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">📅 日期</div>
+          <div class="prop-value" style="display:flex;align-items:center;gap:8px">
+            <span class="prop-plain" style="cursor:pointer;flex:1" onclick="showDateRangePicker(this,'${c.id}')">${c.start_date&&c.end_date?`${fmtDate(c.start_date)} → ${fmtDate(c.end_date)}`:fmtDate(c.start_date)||'<span style="color:#DDD">點擊設定</span>'}</span>
+            ${(c.start_date||c.end_date||c.deadline)?`<button class="gcal-btn" onclick="addToGoogleCalendar('${c.id}')" title="加入 Google 日曆"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
+          </div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">⚠ Deadline</div>
+          <div class="prop-value" style="display:flex;align-items:center;gap:8px">
+            <span class="prop-plain" style="cursor:pointer;flex:1" onclick="showDeadlinePicker(this,'${c.id}')">${fmtDate(c.deadline)||'<span style="color:#DDD">點擊設定</span>'}</span>
+            ${c.deadline?`<button class="gcal-btn" onclick="addDeadlineToGCal('${c.id}')" title="加入 Google 日曆"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
+          </div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">◎ 優先級</div>
+          <div class="prop-value"><span class="badge b-pri-${c.priority||'中'}" onclick="showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${c.priority||'中'}</span></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">🏷 類別</div>
+          <div class="prop-value"><span class="badge cat-tag b-cat-${c.category||'其他'}" onclick="showInlineDD(this,CAT_DD_ITEMS,v=>updateField('${c.id}','category',v))">${c.category||'其他'}</span></div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">👤 客戶</div>
+          <div class="prop-value prop-plain">${esc(c.client||'—')}</div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">💰 報價</div>
+          <div class="prop-value prop-plain">${c.quote_amount?'$'+Number(c.quote_amount).toLocaleString():'—'}</div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">💳 付款</div>
+          <div class="prop-value">${c.payment_status?`<span class="badge b-pay-${c.payment_status}" onclick="showInlineDD(this,PAY_DD_ITEMS,v=>updateField('${c.id}','payment_status',v))">${c.payment_status}</span>`:'—'}</div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">📞 聯絡人</div>
+          <div class="prop-value prop-plain">${[esc(c.contact_name||''),esc(c.contact_info||'')].filter(Boolean).join('　')||'—'}</div>
+        </div>
+      </div>
+
+      <div class="section-hd">📋 項目</div>
+      <div class="task-tbl">
+        <div class="task-head"><div class="task-th">🏷 項目</div><div class="task-th">✦ 狀態</div><div class="task-th">≡ 備註</div><div class="task-th">📅 日期</div></div>
+        ${taskRows||'<div class="empty" style="padding:12px 0">還沒有項目</div>'}
+        <button class="btn-add-task" onclick="addTask()">＋ 新增項目</button>
+      </div>
+
+      <div class="section-hd">📝 進度備忘</div>
+      <textarea class="note-ta" id="panel-note" placeholder="記錄目前進度、待辦、溝通重點…">${esc(c.progress_note||'')}</textarea>
+      <button class="btn-save-note" onclick="saveProgressNote()">儲存備忘</button>
+
+      <div class="panel-del">
+        <button class="btn-del" onclick="deleteCase('${c.id}')">刪除此專案</button>
+      </div>`;
+  }
+
+  // ── Tasks ─────────────────────────────────
+  async function syncTasks(c) {
+    saveLocal();
+    if (!db) return;
+    setSyncDot('loading');
+    try { const{error}=await db.from('cases').update({tasks:c.tasks}).eq('id',c.id); setSyncDot(error?'err':'ok'); } catch(e){setSyncDot('err');}
+  }
+  function addTask() {
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    const t=parseTasks(c.tasks); t.push({id:Date.now().toString(),name:'新項目',status:'未開始',note:'',date:''});
+    c.tasks=JSON.stringify(t); renderPanel(); syncTasks(c);
+  }
+  function updateTaskName(idx,name) {
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    const t=parseTasks(c.tasks); if(t[idx])t[idx].name=name;
+    c.tasks=JSON.stringify(t); syncTasks(c);
+  }
+  function setTaskStatus(idx,status) {
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    const t=parseTasks(c.tasks); if(t[idx])t[idx].status=status;
+    c.tasks=JSON.stringify(t); renderPanel(); syncTasks(c);
+  }
+  function updateTaskNote(idx, note) {
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    const t=parseTasks(c.tasks); if(t[idx])t[idx].note=note;
+    c.tasks=JSON.stringify(t); syncTasks(c);
+  }
+  function deleteTask(idx) {
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    const t=parseTasks(c.tasks); t.splice(idx,1);
+    c.tasks=JSON.stringify(t); renderPanel(); syncTasks(c);
+  }
+  async function saveProgressNote() {
+    const note=document.getElementById('panel-note')?.value||'';
+    const c=cases.find(x=>x.id===viewingId); if(!c)return;
+    c.progress_note=note; saveLocal(); showToast('備忘已儲存 ✓');
+    if(db){setSyncDot('loading');try{const{error}=await db.from('cases').update({progress_note:note}).eq('id',viewingId);setSyncDot(error?'err':'ok');}catch(e){setSyncDot('err');}}
+  }
+  function addDeadlineToGCal(caseId) {
+    const c = cases.find(x=>x.id===caseId); if(!c||!c.deadline) return;
+    const d = c.deadline.replace(/-/g,'');
+    const title = encodeURIComponent((c.name||'專案') + ' — Deadline');
+    const details = encodeURIComponent([c.client?`客戶：${c.client}`:'', c.status?`狀態：${c.status}`:''].filter(Boolean).join('\n'));
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${d}/${d}&details=${details}`, '_blank');
+  }
+
+  function showTaskDatePicker(anchor, idx) {
+    if (_ddAnchor === anchor) { closeInlineDD(); return; }
+    closeInlineDD();
+    _ddAnchor = anchor;
+    const c = cases.find(x=>x.id===viewingId); if(!c) return;
+    const t = parseTasks(c.tasks); const task = t[idx];
+    const dd = document.createElement('div');
+    dd.className = 'inline-dd date-picker-dd'; dd.id = 'inline-dd';
+    dd.innerHTML = `
+      <div class="dp-title">📅 項目日期</div>
+      <div class="dp-row"><input type="date" id="dp-task-date" value="${task?.date||''}"></div>
+      <div class="dp-actions">
+        <button class="dp-btn-clear" onclick="updateTaskDate(${idx},'');closeInlineDD()">清除</button>
+        <button class="dp-btn-confirm" onclick="updateTaskDate(${idx},document.getElementById('dp-task-date').value);closeInlineDD()">確定</button>
+      </div>`;
+    positionDD(dd, anchor);
+    document.body.appendChild(dd);
+    setTimeout(() => document.addEventListener('click', onOutside), 10);
+  }
+
+  function updateTaskDate(idx, date) {
+    const c = cases.find(x=>x.id===viewingId); if(!c) return;
+    const t = parseTasks(c.tasks); if(t[idx]) t[idx].date = date;
+    c.tasks = JSON.stringify(t); renderPanel(); syncTasks(c);
+  }
+
+  function addTaskToGCal(idx) {
+    const c = cases.find(x=>x.id===viewingId); if(!c) return;
+    const t = parseTasks(c.tasks); const task = t[idx]; if(!task||!task.date) return;
+    const d = task.date.replace(/-/g,'');
+    const title = encodeURIComponent((task.name||'項目') + (c.name?` (${c.name})`:''));
+    const details = encodeURIComponent(task.note||'');
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${d}/${d}&details=${details}`, '_blank');
+  }
+
+  function addToGoogleCalendar(caseId) {
+    const c = cases.find(x=>x.id===caseId); if(!c) return;
+    const title = encodeURIComponent(c.name||'專案');
+    let dates = '';
+    if (c.start_date && c.end_date) {
+      dates = c.start_date.replace(/-/g,'') + '/' + c.end_date.replace(/-/g,'');
+    } else if (c.start_date) {
+      const s = c.start_date.replace(/-/g,'');
+      dates = s + '/' + s;
+    } else if (c.deadline) {
+      const d = c.deadline.replace(/-/g,'');
+      dates = d + '/' + d;
+    }
+    const parts = [c.client?`客戶：${c.client}`:'', c.status?`狀態：${c.status}`:'', c.note?`備註：${c.note}`:''].filter(Boolean);
+    const details = encodeURIComponent(parts.join('\n'));
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dates}&details=${details}`, '_blank');
+  }
+
+  async function deleteCase(id) {
+    if(!confirm('確定刪除這個專案？'))return;
+    cases=cases.filter(c=>c.id!==id); saveLocal(); closePanel(); renderAll(); showToast('已刪除');
+    if(db){setSyncDot('loading');try{const{error}=await db.from('cases').delete().eq('id',id);setSyncDot(error?'err':'ok');}catch(e){setSyncDot('err');}}
+  }
+
+  // ── Modal ─────────────────────────────────
+  function openModal(id=null) {
+    editingId=id;
+    if(id){
+      const c=cases.find(x=>x.id===id);
+      document.getElementById('modal-ttl').textContent='編輯專案';
+      document.getElementById('m-name').value=c.name||'';
+      document.getElementById('m-client').value=c.client||'';
+      document.getElementById('m-category').value=c.category||'藝術';
+      document.getElementById('m-status').value=c.status||'接洽中';
+      document.getElementById('m-priority').value=c.priority||'中';
+      document.getElementById('m-start').value=c.start_date||'';
+      document.getElementById('m-end').value=c.end_date||'';
+      document.getElementById('m-deadline').value=c.deadline||'';
+      document.getElementById('m-quote').value=c.quote_amount||'';
+      document.getElementById('m-pay-status').value=c.payment_status||'未收款';
+      document.getElementById('m-contact-name').value=c.contact_name||'';
+      document.getElementById('m-contact-info').value=c.contact_info||'';
+      document.getElementById('m-note').value=c.note||'';
+    } else {
+      document.getElementById('modal-ttl').textContent='新增專案';
+      ['m-name','m-client','m-contact-name','m-contact-info','m-note'].forEach(x=>document.getElementById(x).value='');
+      document.getElementById('m-category').value='藝術';
+      document.getElementById('m-status').value='接洽中';
+      document.getElementById('m-priority').value='中';
+      ['m-start','m-end','m-deadline','m-quote'].forEach(x=>document.getElementById(x).value='');
+      document.getElementById('m-pay-status').value='未收款';
+    }
+    document.getElementById('modal').classList.add('open');
+  }
+  function openModalForStatus(s){openModal();document.getElementById('m-status').value=s;}
+  function closeModal(){document.getElementById('modal').classList.remove('open');editingId=null;}
+
+  async function saveCase() {
+    const name=document.getElementById('m-name').value.trim();
+    if(!name){showToast('請輸入專案名稱');return;}
+    const data={
+      name,client:document.getElementById('m-client').value.trim(),
+      category:document.getElementById('m-category').value,
+      status:document.getElementById('m-status').value,
+      priority:document.getElementById('m-priority').value,
+      start_date:document.getElementById('m-start').value,
+      end_date:document.getElementById('m-end').value,
+      deadline:document.getElementById('m-deadline').value,
+      quote_amount:parseFloat(document.getElementById('m-quote').value)||0,
+      payment_status:document.getElementById('m-pay-status').value,
+      contact_name:document.getElementById('m-contact-name').value.trim(),
+      contact_info:document.getElementById('m-contact-info').value.trim(),
+      note:document.getElementById('m-note').value.trim(),
+    };
+    const isNew=!editingId;
+    if(isNew){data.id=Date.now().toString();data.created_at=new Date().toISOString();data.progress_note='';data.tasks='[]';cases.unshift(data);}
+    else{const i=cases.findIndex(c=>c.id===editingId);if(i!==-1)cases[i]={...cases[i],...data};}
+    const savedId=editingId||data.id;
+    saveLocal();renderAll();closeModal();showToast(isNew?'已新增 ✓':'已更新 ✓');
+    if(viewingId===savedId)renderPanel();
+    if(db){setSyncDot('loading');try{const{error}=isNew?await db.from('cases').insert(data):await db.from('cases').update(data).eq('id',savedId);setSyncDot(error?'err':'ok');}catch(e){setSyncDot('err');}}
+  }
+
+  init();
+</script>
+</body>
+</html>
