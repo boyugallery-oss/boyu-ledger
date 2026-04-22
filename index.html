@@ -1194,7 +1194,9 @@
         esc(p.note)
       ].join(',');
     });
-    const csv  = '\uFEFF' + [hdr, ...rows].join('\n');
+    const total = projects.reduce((s, p) => s + (Number(p.quote_amount) || 0), 0);
+    const totalRow = `"報價總計",,,,,${total},,,,, `;
+    const csv  = '\uFEFF' + [hdr, ...rows, '', totalRow].join('\n');
     const blob = new Blob([csv], {type:'text/csv;charset=utf-8;'});
     const url  = URL.createObjectURL(blob);
     const a    = Object.assign(document.createElement('a'), {href:url, download:`Boyu專案_${new Date().toISOString().slice(0,10)}.csv`});
