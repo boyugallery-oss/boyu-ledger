@@ -218,7 +218,12 @@
     .task-head { display: grid; grid-template-columns: 1fr 100px 1fr 148px; border-bottom: 1px solid #EEEDE9; background: #FAFAF8; padding: 0 10px; }
     .task-th { padding: 6px 8px; font-size: 0.72rem; color: #BBB; font-weight: 500; }
     .task-row { display: grid; grid-template-columns: 1fr 100px 1fr 148px; border-bottom: 1px solid #F5F5F2; align-items: center; min-height: 36px; padding: 0 10px; }
-    .task-date-cell { padding: 3px 8px; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .task-date-cell { padding: 3px 8px; display: flex; align-items: center; gap: 4px; cursor: pointer; position: relative; }
+    @media (max-width: 600px) {
+      .task-head, .task-row { grid-template-columns: 1fr 120px; }
+      .task-st-cell, .task-note-cell { display: none !important; }
+      .task-th-st, .task-th-note { display: none !important; }
+    }
     .task-date-text { font-size: 0.78rem; color: #666; white-space: nowrap; }
     .task-row:last-child { border-bottom: none; }
     .task-row:hover { background: #FAFAF8; }
@@ -690,10 +695,10 @@
         <div class="task-note-cell">
           <input class="task-note-input" value="${esc(t.note||'')}" placeholder="備註…" onblur="updateTaskNote(${i},this.value)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
         </div>
-        <div class="task-date-cell" style="position:relative">
-          <span class="task-date-text" onclick="event.stopPropagation();document.getElementById('tdp-${i}').showPicker()">${t.date ? fmtDate(t.date) : '<span style="color:#DDD">選擇日期</span>'}</span>
-          <input type="date" id="tdp-${i}" value="${t.date||''}" onchange="updateTaskDate(${i},this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0">
-          ${t.date?`<button class="gcal-btn" onclick="event.stopPropagation();addTaskToGCal(${i})" title="加入 Google 日曆" style="padding:1px 2px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
+        <div class="task-date-cell">
+          <span class="task-date-text" style="pointer-events:none">${t.date ? fmtDate(t.date) : '<span style="color:#DDD">選擇日期</span>'}</span>
+          <input type="date" value="${t.date||''}" onchange="event.stopPropagation();updateTaskDate(${i},this.value)" style="position:absolute;inset:0;opacity:0;width:100%;height:100%;cursor:pointer;z-index:1">
+          ${t.date?`<button class="gcal-btn" onclick="event.stopPropagation();addTaskToGCal(${i})" title="加入 Google 日曆" style="padding:1px 2px;position:relative;z-index:2"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
         </div>
       </div>`).join('');
 
@@ -761,7 +766,7 @@
 
       <div class="section-hd">📋 項目</div>
       <div class="task-tbl">
-        <div class="task-head"><div class="task-th">🏷 項目</div><div class="task-th">✦ 狀態</div><div class="task-th">≡ 備註</div><div class="task-th">📅 日期</div></div>
+        <div class="task-head"><div class="task-th">🏷 項目</div><div class="task-th task-th-st">✦ 狀態</div><div class="task-th task-th-note">≡ 備註</div><div class="task-th">📅 日期</div></div>
         ${taskRows||'<div class="empty" style="padding:12px 0">還沒有項目</div>'}
         <button class="btn-add-task" onclick="addTask()">＋ 新增項目</button>
       </div>
