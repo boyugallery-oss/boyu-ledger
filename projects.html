@@ -732,10 +732,10 @@
         </div>
         <div class="prop-row">
           <div class="prop-label">⚠ Deadline</div>
-          <div class="prop-value" style="display:flex;align-items:center;gap:8px;position:relative;cursor:pointer" onclick="this.querySelector('input[type=date]').showPicker()">
+          <div class="prop-value" style="display:flex;align-items:center;gap:8px;position:relative">
             <span class="prop-plain" style="flex:1;pointer-events:none">${fmtDate(c.deadline)||'<span style="color:#DDD">點擊設定</span>'}</span>
-            <input type="date" id="dl-picker-${c.id}" value="${c.deadline||''}" onchange="event.stopPropagation();updateField('${c.id}','deadline',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0">
-            ${c.deadline?`<button class="gcal-btn" onclick="event.stopPropagation();addDeadlineToGCal('${c.id}')" title="加入 Google 日曆" style="position:relative;z-index:1"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
+            <input type="date" id="dl-picker-${c.id}" value="${c.deadline||''}" onchange="event.stopPropagation();updateField('${c.id}','deadline',this.value)" style="position:absolute;top:0;left:0;width:100%;height:100%;opacity:0.001;cursor:pointer;z-index:1">
+            ${c.deadline?`<button class="gcal-btn" onclick="event.stopPropagation();addDeadlineToGCal('${c.id}')" title="加入 Google 日曆" style="position:relative;z-index:2"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
           </div>
         </div>
         <div class="prop-row">
@@ -957,24 +957,31 @@
   // ── Swipe-right to close panel (mobile) ───
   (function() {
     const panel = document.getElementById('panel-col');
-    let startX = 0, startY = 0, dragging = false;
-    panel.addEventListener('touchstart', e => {
-      startX = e.touches[0].clientX;
-      startY = e.touches[0].clientY;
-      dragging = false;
-      panel.style.transition = 'none';
+    let startX = 0, startY = 0, active = false;
+    // Listen on document; only activate when panel is open and touch starts from left edge
+    document.addEventListener('touchstart', e => {
+      const wrap = document.getElementById('app-wrap');
+      if (!wrap.classList.contains('open')) return;
+      const touch = e.touches[0];
+      if (touch.clientX > 44) return;
+      startX = touch.clientX;
+      startY = touch.clientY;
+      active = true;
     }, { passive: true });
-    panel.addEventListener('touchmove', e => {
+    document.addEventListener('touchmove', e => {
+      if (!active) return;
       const dx = e.touches[0].clientX - startX;
       const dy = e.touches[0].clientY - startY;
-      if (!dragging && Math.abs(dy) > Math.abs(dx)) return;
-      dragging = true;
+      if (Math.abs(dy) > Math.abs(dx) + 10) { active = false; panel.style.transform = ''; return; }
+      panel.style.transition = 'none';
       if (dx > 0) panel.style.transform = `translateX(${dx}px)`;
     }, { passive: true });
-    panel.addEventListener('touchend', e => {
+    document.addEventListener('touchend', e => {
+      if (!active) return;
+      active = false;
       panel.style.transition = '';
       const dx = e.changedTouches[0].clientX - startX;
-      if (dragging && dx > 60) {
+      if (dx > 60) {
         panel.style.transform = '';
         closePanel();
       } else {
