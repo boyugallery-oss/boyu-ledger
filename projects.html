@@ -157,6 +157,23 @@
     }
     .btn-add-row:hover { color: #555; background: #FAFAF8; }
 
+    /* ── Calendar range picker ── */
+    .cal-picker { min-width: 272px; padding: 8px 10px; user-select: none; }
+    .cal-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+    .cal-nav { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 2px 8px; color: #888; border-radius: 5px; font-family: inherit; }
+    .cal-nav:hover { background: #F5F5F3; }
+    .cal-month-lbl { font-size: 0.85rem; font-weight: 600; }
+    .cal-wds { display: grid; grid-template-columns: repeat(7,1fr); margin-bottom: 3px; }
+    .cal-wd { text-align: center; font-size: 0.65rem; color: #CCC; padding: 3px 0; }
+    .cal-grid { display: grid; grid-template-columns: repeat(7,1fr); }
+    .cal-day { text-align: center; padding: 5px 2px; font-size: 0.78rem; cursor: pointer; border-radius: 4px; }
+    .cal-day:hover:not(.cal-other) { background: #F0F0EE; }
+    .cal-other { color: #DDD; cursor: default; pointer-events: none; }
+    .cal-sel { background: #1C1C1C !important; color: white !important; border-radius: 4px !important; }
+    .cal-range { background: #EEEEED; border-radius: 0; }
+    .cal-hint { font-size: 0.69rem; color: #AAA; text-align: center; padding: 6px 0 3px; }
+    .cal-footer { display: flex; justify-content: flex-end; padding: 5px 0 0; border-top: 1px solid #F5F5F2; margin-top: 4px; }
+
     /* ── Date picker dropdown ── */
     .date-picker-dd { min-width: 230px; }
     .dp-title { font-size: 0.7rem; color: #AAA; font-weight: 600; padding: 4px 8px 6px; letter-spacing: 0.05em; }
@@ -354,7 +371,8 @@
       try {
         const { data, error } = await db.from('cases').select('*').order('created_at',{ascending:false});
         if (!error && data) { cases = data; saveLocal(); renderAll(); if (viewingId) renderPanel(); setSyncDot('ok'); return; }
-      } catch(e) {}
+        if (error && delay===6000) showToast('⚠ 讀取失敗：'+error.message);
+      } catch(e) { if(delay===6000) showToast('⚠ 連線錯誤：'+e.message); }
       setSyncDot('err');
     }
   }
@@ -414,25 +432,87 @@
   function onOutside(e) { if (!document.getElementById('inline-dd')?.contains(e.target)) closeInlineDD(); }
   function closeInlineDD() { _ddAnchor = null; document.getElementById('inline-dd')?.remove(); document.removeEventListener('click', onOutside); }
 
-  // ── Date pickers ──────────────────────────
+  // ── Calendar range picker ─────────────────
+  let _cal = null;
+
   function showDateRangePicker(anchor, caseId) {
-    const c = cases.find(x=>x.id===caseId); if(!c) return;
     if (_ddAnchor === anchor) { closeInlineDD(); return; }
     closeInlineDD();
     _ddAnchor = anchor;
+    const c = cases.find(x=>x.id===caseId); if(!c) return;
+    const init = c.start_date ? new Date(c.start_date+'T00:00:00') : new Date();
+    _cal = { caseId, anchor, year: init.getFullYear(), month: init.getMonth(),
+             start: c.start_date||null, end: c.end_date||null, picking:'start', hover:null };
     const dd = document.createElement('div');
-    dd.className = 'inline-dd date-picker-dd'; dd.id = 'inline-dd';
+    dd.className = 'inline-dd cal-picker'; dd.id = 'inline-dd';
     dd.innerHTML = `
-      <div class="dp-title">📅 日期範圍</div>
-      <div class="dp-row"><span class="dp-label">開始日期</span><input type="date" id="dp-start" value="${c.start_date||''}"></div>
-      <div class="dp-row"><span class="dp-label">截止日期</span><input type="date" id="dp-end" value="${c.end_date||''}"></div>
-      <div class="dp-actions">
-        <button class="dp-btn-clear" onclick="saveDateRange('${caseId}','','')">清除</button>
-        <button class="dp-btn-confirm" onclick="saveDateRange('${caseId}',document.getElementById('dp-start').value,document.getElementById('dp-end').value)">確定</button>
-      </div>`;
+      <div class="cal-header">
+        <button class="cal-nav" onclick="event.stopPropagation();_calNav(-1)">‹</button>
+        <span class="cal-month-lbl" id="cal-lbl"></span>
+        <button class="cal-nav" onclick="event.stopPropagation();_calNav(1)">›</button>
+      </div>
+      <div class="cal-wds"><span class="cal-wd">日</span><span class="cal-wd">一</span><span class="cal-wd">二</span><span class="cal-wd">三</span><span class="cal-wd">四</span><span class="cal-wd">五</span><span class="cal-wd">六</span></div>
+      <div id="cal-grid" class="cal-grid"></div>
+      <div class="cal-hint" id="cal-hint"></div>
+      <div class="cal-footer"><button class="dp-btn-clear" onclick="event.stopPropagation();saveDateRange(_cal.caseId,'','');closeInlineDD()">清除</button></div>`;
     positionDD(dd, anchor);
     document.body.appendChild(dd);
+    _calRender();
     setTimeout(() => document.addEventListener('click', onOutside), 10);
+  }
+
+  function _calRender() {
+    if (!_cal) return;
+    const { year, month, start, end, picking, hover } = _cal;
+    const MN = ['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
+    document.getElementById('cal-lbl').textContent = `${year}年${MN[month]}`;
+    document.getElementById('cal-hint').textContent = picking==='start'?'點選開始日期':'點選結束日期';
+    const first = new Date(year, month, 1).getDay();
+    const total = new Date(year, month+1, 0).getDate();
+    const prev  = new Date(year, month, 0).getDate();
+    let html='';
+    for (let i=0;i<42;i++) {
+      let ds=null, lbl, cls='cal-day';
+      if (i<first) { lbl=prev-first+1+i; cls+=' cal-other'; }
+      else if (i-first+1>total) { lbl=i-first+1-total; cls+=' cal-other'; }
+      else {
+        lbl=i-first+1;
+        const mm=String(month+1).padStart(2,'0'), dd2=String(lbl).padStart(2,'0');
+        ds=`${year}-${mm}-${dd2}`;
+        if (ds===start||ds===end) cls+=' cal-sel';
+        else if (start&&end&&ds>start&&ds<end) cls+=' cal-range';
+      }
+      html+=`<div class="${cls}"${ds?` data-d="${ds}" onclick="event.stopPropagation();_calClick('${ds}')" onmouseenter="_calHover('${ds}')"`:''}>${lbl}</div>`;
+    }
+    document.getElementById('cal-grid').innerHTML = html;
+  }
+
+  function _calClick(d) {
+    if (!_cal) return;
+    if (_cal.picking==='start') {
+      _cal.start=d; _cal.end=null; _cal.picking='end'; _cal.hover=null;
+    } else {
+      const [s,e]=[_cal.start,d].sort();
+      saveDateRange(_cal.caseId,s,e); closeInlineDD(); return;
+    }
+    _calRender();
+  }
+  function _calHover(d) {
+    if (!_cal || _cal.picking !== 'end') return;
+    _cal.hover = d;
+    const lo = _cal.start && d ? [_cal.start, d].sort()[0] : null;
+    const hi = _cal.start && d ? [_cal.start, d].sort()[1] : null;
+    document.querySelectorAll('#cal-grid .cal-day[data-d]').forEach(el => {
+      const ds = el.getAttribute('data-d');
+      el.classList.remove('cal-range');
+      if (lo && hi && ds > lo && ds < hi) el.classList.add('cal-range');
+    });
+  }
+  function _calNav(dir) {
+    if (!_cal) return;
+    _cal.month+=dir;
+    if (_cal.month<0){_cal.month=11;_cal.year--;} if (_cal.month>11){_cal.month=0;_cal.year++;}
+    _calRender();
   }
 
   function showDeadlinePicker(anchor, caseId) {
@@ -550,11 +630,11 @@
           ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD;font-size:0.8rem">—</span>'}
         </div>
         <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDateRangePicker(this,'${c.id}')">${date||'<span style="color:#DDD">選擇日期</span>'}</div>
-        <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDeadlinePicker(this,'${c.id}')">${fmtDate(c.deadline)||'<span style="color:#DDD">—</span>'}</div>
+        <div class="td td-date" style="cursor:pointer;position:relative" onclick="event.stopPropagation();document.getElementById('dl-r-${c.id}').showPicker()">${fmtDate(c.deadline)||'<span style="color:#DDD">—</span>'}<input type="date" id="dl-r-${c.id}" value="${c.deadline||''}" onchange="event.stopPropagation();updateField('${c.id}','deadline',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0"></div>
         <div class="td">
           <span class="badge b-pri-${pri}" onclick="event.stopPropagation();showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${pri}</span>
         </div>
-        <div class="td td-note">${esc(c.note||'')}</div>
+        <div class="td td-note">${esc(c.progress_note||'')}</div>
         <div class="td">
           <span class="badge cat-tag b-cat-${c.category||'其他'}" onclick="event.stopPropagation();showInlineDD(this,CAT_DD_ITEMS,v=>updateField('${c.id}','category',v))">${c.category||'其他'}</span>
         </div>
@@ -610,8 +690,9 @@
         <div class="task-note-cell">
           <input class="task-note-input" value="${esc(t.note||'')}" placeholder="備註…" onblur="updateTaskNote(${i},this.value)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
         </div>
-        <div class="task-date-cell" onclick="event.stopPropagation();showTaskDatePicker(this,${i})">
-          <span class="task-date-text">${t.date ? fmtDate(t.date) : '<span style="color:#DDD">選擇日期</span>'}</span>
+        <div class="task-date-cell" style="position:relative">
+          <span class="task-date-text" onclick="event.stopPropagation();document.getElementById('tdp-${i}').showPicker()">${t.date ? fmtDate(t.date) : '<span style="color:#DDD">選擇日期</span>'}</span>
+          <input type="date" id="tdp-${i}" value="${t.date||''}" onchange="updateTaskDate(${i},this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0">
           ${t.date?`<button class="gcal-btn" onclick="event.stopPropagation();addTaskToGCal(${i})" title="加入 Google 日曆" style="padding:1px 2px"><svg width="11" height="11" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
         </div>
       </div>`).join('');
@@ -646,8 +727,9 @@
         </div>
         <div class="prop-row">
           <div class="prop-label">⚠ Deadline</div>
-          <div class="prop-value" style="display:flex;align-items:center;gap:8px">
-            <span class="prop-plain" style="cursor:pointer;flex:1" onclick="showDeadlinePicker(this,'${c.id}')">${fmtDate(c.deadline)||'<span style="color:#DDD">點擊設定</span>'}</span>
+          <div class="prop-value" style="display:flex;align-items:center;gap:8px;position:relative">
+            <span class="prop-plain" style="cursor:pointer;flex:1" onclick="document.getElementById('dl-picker-${c.id}').showPicker()">${fmtDate(c.deadline)||'<span style="color:#DDD">點擊設定</span>'}</span>
+            <input type="date" id="dl-picker-${c.id}" value="${c.deadline||''}" onchange="updateField('${c.id}','deadline',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0">
             ${c.deadline?`<button class="gcal-btn" onclick="addDeadlineToGCal('${c.id}')" title="加入 Google 日曆"><svg width="13" height="13" viewBox="0 0 24 24" fill="none"><rect x="2" y="3" width="20" height="20" rx="2.5" stroke="#1a73e8" stroke-width="2"/><line x1="2" y1="9" x2="22" y2="9" stroke="#1a73e8" stroke-width="2"/><line x1="8" y1="1" x2="8" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/><line x1="16" y1="1" x2="16" y2="5" stroke="#1a73e8" stroke-width="2" stroke-linecap="round"/></svg></button>`:''}
           </div>
         </div>
@@ -684,9 +766,9 @@
         <button class="btn-add-task" onclick="addTask()">＋ 新增項目</button>
       </div>
 
-      <div class="section-hd">📝 進度備忘</div>
+      <div class="section-hd">📝 備注</div>
       <textarea class="note-ta" id="panel-note" placeholder="記錄目前進度、待辦、溝通重點…">${esc(c.progress_note||'')}</textarea>
-      <button class="btn-save-note" onclick="saveProgressNote()">儲存備忘</button>
+      <button class="btn-save-note" onclick="saveProgressNote()">儲存備注</button>
 
       <div class="panel-del">
         <button class="btn-del" onclick="deleteCase('${c.id}')">刪除此專案</button>
@@ -728,15 +810,16 @@
   async function saveProgressNote() {
     const note=document.getElementById('panel-note')?.value||'';
     const c=cases.find(x=>x.id===viewingId); if(!c)return;
-    c.progress_note=note; saveLocal(); showToast('備忘已儲存 ✓');
+    c.progress_note=note; saveLocal(); renderAll(); showToast('備注已儲存 ✓');
     if(db){setSyncDot('loading');try{const{error}=await db.from('cases').update({progress_note:note}).eq('id',viewingId);setSyncDot(error?'err':'ok');}catch(e){setSyncDot('err');}}
   }
   function addDeadlineToGCal(caseId) {
     const c = cases.find(x=>x.id===caseId); if(!c||!c.deadline) return;
     const d = c.deadline.replace(/-/g,'');
+    const dNext = gcalNextDay(c.deadline);
     const title = encodeURIComponent((c.name||'專案') + ' — Deadline');
     const details = encodeURIComponent([c.client?`客戶：${c.client}`:'', c.status?`狀態：${c.status}`:''].filter(Boolean).join('\n'));
-    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${d}/${d}&details=${details}`, '_blank');
+    window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${d}/${dNext}&details=${details}`, '_blank');
   }
 
   function showTaskDatePicker(anchor, idx) {
@@ -774,18 +857,25 @@
     window.open(`https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${d}/${d}&details=${details}`, '_blank');
   }
 
+  function gcalNextDay(dateStr) {
+    const d = new Date(dateStr + 'T00:00:00');
+    d.setDate(d.getDate() + 1);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}${m}${day}`;
+  }
+
   function addToGoogleCalendar(caseId) {
     const c = cases.find(x=>x.id===caseId); if(!c) return;
     const title = encodeURIComponent(c.name||'專案');
     let dates = '';
     if (c.start_date && c.end_date) {
-      dates = c.start_date.replace(/-/g,'') + '/' + c.end_date.replace(/-/g,'');
+      dates = c.start_date.replace(/-/g,'') + '/' + gcalNextDay(c.end_date);
     } else if (c.start_date) {
-      const s = c.start_date.replace(/-/g,'');
-      dates = s + '/' + s;
+      dates = c.start_date.replace(/-/g,'') + '/' + gcalNextDay(c.start_date);
     } else if (c.deadline) {
-      const d = c.deadline.replace(/-/g,'');
-      dates = d + '/' + d;
+      dates = c.deadline.replace(/-/g,'') + '/' + gcalNextDay(c.deadline);
     }
     const parts = [c.client?`客戶：${c.client}`:'', c.status?`狀態：${c.status}`:'', c.note?`備註：${c.note}`:''].filter(Boolean);
     const details = encodeURIComponent(parts.join('\n'));
@@ -854,7 +944,7 @@
     const savedId=editingId||data.id;
     saveLocal();renderAll();closeModal();showToast(isNew?'已新增 ✓':'已更新 ✓');
     if(viewingId===savedId)renderPanel();
-    if(db){setSyncDot('loading');try{const{error}=isNew?await db.from('cases').insert(data):await db.from('cases').update(data).eq('id',savedId);setSyncDot(error?'err':'ok');}catch(e){setSyncDot('err');}}
+    if(db){setSyncDot('loading');try{const{error}=isNew?await db.from('cases').insert(data):await db.from('cases').update(data).eq('id',savedId);if(error){setSyncDot('err');showToast('⚠ 雲端同步失敗：'+error.message);}else{setSyncDot('ok');}}catch(e){setSyncDot('err');showToast('⚠ 雲端連線錯誤：'+e.message);}}
   }
 
   init();
