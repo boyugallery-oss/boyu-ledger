@@ -79,6 +79,7 @@
 
     /* ── Status group ── */
     .status-group { margin-bottom: 24px; }
+    .group-total { text-align: right; font-weight: 700; font-size: 0.85rem; padding: 8px 12px 0 0; color: #1A1A1A; }
     .group-header { display: flex; align-items: center; gap: 8px; padding: 4px 0 8px; cursor: pointer; user-select: none; }
     .group-arrow { font-size: 0.58rem; color: #AAA; transition: transform 0.18s; display: inline-block; }
     .group-arrow.collapsed { transform: rotate(-90deg); }
@@ -641,23 +642,26 @@
         <div class="td">
           <span class="badge b-pri-${pri}" onclick="event.stopPropagation();showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${pri}</span>
         </div>
-        <div class="td td-note">${esc(c.progress_note||'')}</div>
+        <div class="td td-note" style="text-align:right;padding-right:12px">${c.quote_amount?('NT$ '+Number(c.quote_amount).toLocaleString()):''}</div>
         <div class="td">
           <span class="badge cat-tag b-cat-${c.category||'其他'}" onclick="event.stopPropagation();showInlineDD(this,CAT_DD_ITEMS,v=>updateField('${c.id}','category',v))">${c.category||'其他'}</span>
         </div>
       </div>`;
     }).join('');
 
+    const total = group.reduce((s,c)=>s+(Number(c.quote_amount)||0),0);
+
     return `<div class="proj-table">
       <div class="table-head">
         <div class="th">🗒 專案名稱</div><div class="th">✦ 狀態</div>
         <div class="th">🧾 發票</div>
         <div class="th">📅 日期</div><div class="th">⚠ Deadline</div>
-        <div class="th">◎ 優先級</div><div class="th">≡ 備註</div><div class="th">類別</div>
+        <div class="th">◎ 優先級</div><div class="th" style="text-align:right;padding-right:12px">≡ 報價</div><div class="th">類別</div>
       </div>
       ${rows||'<div class="empty" style="padding:16px 0">此分類無專案</div>'}
       <button class="btn-add-row" onclick="openModalForStatus('${status}')">＋ 新專案</button>
-    </div>`;
+    </div>
+    <div class="group-total">Total NT$ ${total.toLocaleString()}</div>`;
   }
 
   function toggleGroup(s) { collapsed[s]=!collapsed[s]; renderAll(); }
