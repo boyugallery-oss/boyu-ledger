@@ -89,6 +89,7 @@
     .pill-接洽中{background:#FFF0E0;color:#C15000}.pill-dot-接洽中{background:#FF9800}
     .pill-進行中{background:#FDFAEC;color:#A0780A}.pill-dot-進行中{background:#E8B800}
     .pill-暫停{background:#F0ECFF;color:#6B3EBB}.pill-dot-暫停{background:#9B74D7}
+    .pill-終止{background:#EEEEEC;color:#767671}.pill-dot-終止{background:#9C9C96}
     .pill-已完成{background:#E6F6EC;color:#237843}.pill-dot-已完成{background:#3DB660}
 
     /* ── Table ── */
@@ -130,6 +131,7 @@
     .b-接洽中{background:#FFF0E0;color:#C15000} .bd-接洽中{background:#FF9800}
     .b-進行中{background:#FDFAEC;color:#A0780A} .bd-進行中{background:#E8B800}
     .b-暫停{background:#F0ECFF;color:#6B3EBB}   .bd-暫停{background:#9B74D7}
+    .b-終止{background:#EEEEEC;color:#767671}   .bd-終止{background:#9C9C96}
     .b-已完成{background:#E6F6EC;color:#237843}  .bd-已完成{background:#3DB660}
     .b-pri-低{background:#E6F6EC;color:#237843}
     .b-pri-中{background:#FDFAEC;color:#A0780A}
@@ -320,7 +322,7 @@
     <div class="fg"><span class="fl">客戶 / 單位</span><input type="text" id="m-client" placeholder="例：國立故宮博物院"></div>
     <div class="fgrid3">
       <div class="fg" style="margin-bottom:0"><span class="fl">類別</span><select id="m-category"><option>藝術</option><option>設計</option><option>空間</option><option>其他</option></select></div>
-      <div class="fg" style="margin-bottom:0"><span class="fl">狀態</span><select id="m-status"><option>接洽中</option><option>進行中</option><option>暫停</option><option>已完成</option></select></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">狀態</span><select id="m-status"><option>接洽中</option><option>進行中</option><option>暫停</option><option>終止</option><option>已完成</option></select></div>
       <div class="fg" style="margin-bottom:0"><span class="fl">優先級</span><select id="m-priority"><option>低</option><option selected>中</option><option>高</option></select></div>
     </div>
 
@@ -355,7 +357,7 @@
   const SB_URL = 'https://dwbxuhqhxtvsryzzqsgp.supabase.co';
   const SB_KEY = 'sb_publishable_zmCiLOJx3GxYOxda_nYKMQ_DgcR9Srb';
 
-  const STATUS_ORDER  = ['接洽中','進行中','暫停','已完成'];
+  const STATUS_ORDER  = ['接洽中','進行中','暫停','終止','已完成'];
   const TASK_STATUSES = ['未開始','進行中','已完成'];
   const CAT_PREFIX    = { '藝術':'A','設計':'D','空間':'S','其他':'O' };
 
@@ -561,6 +563,7 @@
     {header:'狀態'},{value:'接洽中',cls:'b-接洽中',dot:'bd-接洽中',label:'接洽中'},
     {value:'進行中',cls:'b-進行中',dot:'bd-進行中',label:'進行中'},
     {value:'暫停',  cls:'b-暫停',  dot:'bd-暫停',  label:'暫停'},
+    {value:'終止',  cls:'b-終止',  dot:'bd-終止',  label:'終止'},
     {value:'已完成',cls:'b-已完成',dot:'bd-已完成',label:'已完成'},
   ];
   const PRIORITY_DD_ITEMS = [
