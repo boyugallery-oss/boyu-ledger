@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <!-- 版本四・2026-10-08 -->
+  <!-- 版本五・2026-10-09 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>📁 Boyu 專案管理</title>
@@ -19,6 +19,110 @@
     }
     .header-left { display: flex; align-items: center; gap: 10px; }
     .app-title { font-size: 0.95rem; font-weight: 700; }
+    .app-title { display: inline-flex; align-items: center; white-space: nowrap; }
+    .view-tab { color: #C8C8C8; cursor: pointer; transition: color 0.15s; padding: 6px 0; }
+    .view-tab:hover { color: #999; }
+    .view-tab.on { color: #000; cursor: default; }
+    .view-sep { display: inline-block; width: 1.5px; height: 0.95em; background: #000; margin: 0 9px; }
+    /* 財務管理頁：電腦上一個畫面看完（上面一排總覽，下面三欄卡片，卡片裡項目多了自己捲）；手機照常往下滑 */
+    .fin-wrap { display: none; max-width: 1400px; margin: 0 auto; padding: 68px 28px 80px; box-sizing: border-box; }
+    body.fin-mode .fin-wrap { display: block; }
+    body.fin-mode #app-wrap, body.fin-mode .proj-only, body.fin-mode #undo-btn { display: none !important; }
+    body:not(.fin-mode) #fin-undo, body:not(.fin-mode) .fin-only { display: none !important; }
+    .fin-panel { background: white; border: 1px solid #E6E5E0; border-radius: 16px; padding: 14px 16px; margin-bottom: 12px; }
+    .fin-top { display: grid; grid-template-columns: 1fr 1fr 1fr 1.05fr 1.3fr; gap: 10px; }
+    .fin-top .fin-now { background: #F7F6F3; }
+    .fin-top .fin-now .yr-sub { margin-top: 3px; }
+    .fin-top .yr-card { background: none; }
+    .fin-grid .rv-sec { background: white; }
+    /* 每一格輸入的字一律同樣大小、同樣粗細 */
+    .fin-row input.prop-input { font-size: 0.83rem !important; font-weight: 400 !important; line-height: 1.4; }
+    .fin-hero { background: #1C1C1C; color: white; border-radius: 16px; padding: 16px 20px; }
+    .fin-hero-label { font-size: 0.78rem; color: #AAA; }
+    .fin-hero-value { font-size: 1.9rem; font-weight: 700; margin: 2px 0 1px; letter-spacing: -0.01em; line-height: 1.15; }
+    .fin-hero-value.neg { color: #FF8A80; }
+    .fin-hero-value.pos { color: #6FCF73; }
+    .fin-hero-sub { font-size: 0.74rem; color: #AAA; }
+    .fin-top .yr-card { text-align: left; padding: 16px 18px; border-radius: 16px; display: flex; flex-direction: column; justify-content: center; }
+    .fin-top .yr-value { font-size: 1.3rem; }
+    .fin-note { font-size: 0.7rem; color: #AAA; line-height: 1.5; margin: 8px 2px 0; }
+    .fin-banner { background: #FFF4E5; color: #8A5A00; font-size: 0.76rem; padding: 8px 12px; border-radius: 10px; margin-bottom: 10px; line-height: 1.5; }
+    .fin-grid { display: grid; grid-template-columns: 1.12fr 1fr 1fr 1.1fr; gap: 12px; }
+    /* 每月收支表 */
+    .fm-row { display: grid; grid-template-columns: 38px 1fr 1fr 1fr; align-items: center; gap: 6px; padding: 0 6px; font-size: 0.8rem; border-top: 1px solid #F0F0F0; min-height: 30px; }
+    .fm-row > * { text-align: right; white-space: nowrap; }
+    .fm-row > :first-child { text-align: left; color: #666; }
+    .fm-head { border-top: none; font-size: 0.68rem; color: #AAA; min-height: 22px; }
+    .fm-head > :first-child { color: #AAA; }
+    .fm-row .fm-op { color: #AAA; }
+    .fm-row .fm-zero { color: #CCC; }
+    .fm-row b { font-weight: 600; }
+    .fm-row.now { background: #F7F6F3; border-radius: 8px; border-top-color: transparent; }
+    .fm-row.now > :first-child { color: #000; font-weight: 700; }
+    .fm-row.now + .fm-row { border-top-color: transparent; }
+    .fm-row.dim { opacity: 0.38; }
+    .fin-grid .rv-sec { margin: 0; padding: 14px 16px 10px; display: flex; flex-direction: column; min-height: 0; min-width: 0; }
+    .fin-sec-hd { display: flex; align-items: baseline; gap: 8px; margin-bottom: 8px; flex-shrink: 0; }
+    .fin-sec-hd .bd-title { flex: 1; margin: 0 !important; font-size: 0.98rem !important; white-space: nowrap; }
+    .fin-sec-hd small { font-size: 0.68rem; color: #AAA; white-space: nowrap; }
+    .fin-sec-hd b { font-size: 0.92rem; font-weight: 700; white-space: nowrap; }
+    .fin-body { flex: 1; min-height: 0; overflow-y: auto; margin-right: -8px; padding-right: 8px; }
+    .fin-body::-webkit-scrollbar { width: 6px; }
+    .fin-body::-webkit-scrollbar-thumb { background: #DDDCD7; border-radius: 3px; }
+    .fin-row { display: flex; align-items: center; gap: 6px; border-top: 1px solid #F0F0F0; padding: 2px 0; min-width: 0; }
+    .fin-row .fin-name { flex: 1; min-width: 0; }
+    .fin-row .fin-amt { width: 62px; flex-shrink: 0; text-align: right; }
+    .fin-row .fin-yearly { width: 76px; flex-shrink: 0; text-align: right; font-size: 0.68rem; color: #AAA; white-space: nowrap; }
+    .fin-x { flex-shrink: 0; background: none; border: none; cursor: pointer; color: #D9534F; font-size: 0.6rem; line-height: 1; padding: 5px 5px; border-radius: 4px; opacity: 0.8; font-family: inherit; }
+    .fin-x:hover { opacity: 1; background: #FDECEA; }
+    .fin-add { background: none; border: none; color: #BBB; font-size: 0.76rem; font-family: inherit; cursor: pointer; padding: 7px 0 2px; }
+    .fin-add:hover { color: #1C1C1C; }
+    .fin-vat-note { font-size: 0.68rem; color: #AAA; line-height: 1.45; margin-bottom: 6px; flex-shrink: 0; }
+    .fin-vat { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
+    .fin-vat .fin-row { border-top: none; border-bottom: 1px solid #F0F0F0; }
+    .fin-vat label { font-size: 0.76rem; color: #888; width: 56px; flex-shrink: 0; white-space: nowrap; }
+    @media (min-width: 900px) and (min-height: 600px) {
+      .fin-wrap { height: 100vh; padding-bottom: 16px; flex-direction: column; overflow: hidden; }
+      body.fin-mode .fin-wrap { display: flex; }
+      .fin-panel, .fin-banner { flex-shrink: 0; }
+      .fin-grid { flex: 1; min-height: 0; grid-template-rows: 1fr 1fr; }
+      .fin-grid .sec-month, .fin-grid .sec-months { grid-row: 1 / 3; }
+      .sec-months .fin-body { display: flex; flex-direction: column; }
+      .sec-months .fm-row { flex: 1; max-height: 44px; }
+      .sec-months .fm-head { flex: none; }
+    }
+    /* 電腦：上面一排由左到右是「營業額 − 專案成本 − 營運成本」，本月淨收入、年淨收入放最右邊；下面每月收支也放最右欄。
+       手機照原本的順序：年淨收入、本月、每月收支排在最前面 */
+    @media (min-width: 900px) {
+      .fin-wrap { --rw: clamp(330px, 27.8vw, 440px); }
+      .fin-top { grid-template-columns: 1fr 1fr 1fr 1.05fr calc(var(--rw) - 17px); }
+      .fin-grid { grid-template-columns: 1.12fr 1fr 1fr var(--rw); }
+      .fin-top .fin-hero { grid-column: 5; grid-row: 1; }
+      .fin-top .fin-now { grid-column: 4; grid-row: 1; }
+      .fin-grid .sec-month { grid-column: 1; }
+      .fin-grid .sec-bimonth { grid-column: 2; grid-row: 1; }
+      .fin-grid .sec-year { grid-column: 2; grid-row: 2; }
+      .fin-grid .sec-once { grid-column: 3; grid-row: 1; }
+      .fin-grid .sec-vat { grid-column: 3; grid-row: 2; }
+      .fin-grid .sec-months { grid-column: 4; }
+    }
+    @media (max-width: 899px) {
+      .fin-top { grid-template-columns: 1fr 1fr 1fr; }
+      .fin-hero, .fin-top .fin-now { grid-column: 1 / -1; text-align: center; align-items: center; } /* 自己佔一整行的兩格：內容置中 */
+      .fin-grid { grid-template-columns: 1fr; }
+      .fin-body { overflow: visible; }
+    }
+    @media (max-width: 640px) {
+      .fin-wrap { padding: 64px 12px 80px; }
+      .fin-hero-value { font-size: 1.7rem; }
+      .fin-top { gap: 8px; }
+      .fin-top .yr-card { padding: 12px 10px; }
+      .fin-top .yr-value { font-size: 0.98rem; }
+      .fin-top .yr-label { font-size: 0.66rem; }
+      .fin-row .fin-amt { width: 66px; }
+      .fin-row .fin-yearly { width: 72px; font-size: 0.64rem; }
+      .fin-x { font-size: 0.7rem; padding: 10px 8px; margin: -4px -6px -4px 0; }
+    }
     .sync-dot { width: 7px; height: 7px; border-radius: 50%; background: #CCC; transition: background 0.3s; }
     .sync-dot.ok { background: #4CAF50; } .sync-dot.err { background: #F44336; }
     .sync-dot.loading { background: #FF9800; animation: pulse 1s infinite; }
@@ -147,6 +251,15 @@
     @media (max-width: 640px) {
       .app-header { padding: 0 12px; gap: 8px; }
       .app-header .btn-year:not(.btn-more):not(.year-select) { display: none; }
+      /* 手機標題列：專案｜財務 → 年份 → 搜尋 → ⋯ → ＋，每一顆都一樣高 */
+      .app-header .year-select, .app-header .search-box, .app-header .btn-more, .app-header .btn-new { height: 32px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; flex-shrink: 0; }
+      .app-header .btn-new { padding: 0 12px; font-size: 1rem; line-height: 1; }
+      .app-header .year-select { padding: 0 9px; }
+      .app-header .btn-more { padding: 0 11px; }
+      .app-header .search-box { flex: none; width: 50px; padding: 0 10px; border-width: 1px; border-color: #E4E4E0; }
+      /* 點進去打字時搜尋框變長，年份先讓位 */
+      .app-header .search-box:focus, .app-header .search-box:not(:placeholder-shown) { flex: 1; width: auto; min-width: 0; }
+      .app-header:has(.search-box:focus) .year-select, .app-header:has(.search-box:not(:placeholder-shown)) .year-select { display: none; }
       .hide-m { display: none; }
       .search-box { width: auto; flex: 1; min-width: 0; }
       .lock-hint { display: none; }
@@ -195,7 +308,11 @@
     .rv-table td { padding: 8px 0; border-top: 1px solid #F0F0F0; text-align: right; white-space: nowrap; font-weight: 600; }
     .rv-table th:first-child, .rv-table td:first-child { text-align: left; color: #444; font-weight: 400; }
     .rv-table td.rv-prev { color: #AAA; font-weight: 400; }
-    .rv-table td.rv-diff { font-size: 0.7rem; width: 74px; }
+    .rv-table th.rv-cur { color: #1C1C1C; font-weight: 600; }
+    .rv-table td.rv-diff { font-size: 0.7rem; }
+    /* 三個數字欄：欄寬貼著內容，欄跟欄之間留一樣的空隙；剩下的寬度都給最左邊的名稱欄 */
+    .rv-table th:first-child, .rv-table td:first-child { width: 100%; }
+    .rv-sec .rv-table th:not(:first-child), .rv-sec .rv-table td:not(:first-child) { padding-left: 36px; white-space: nowrap; }
     .rv-item { display: flex; align-items: baseline; gap: 10px; padding: 8px 0; border-top: 1px solid #F0F0F0; font-size: 0.76rem; cursor: pointer; }
     .rv-item:hover { background: #FAFAF8; }
     .rv-item .rv-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: #444; }
@@ -211,7 +328,7 @@
     .rv-sec .rv-table td { padding: 5px 0; }
     .rv-sec .rv-item { padding: 5px 0; }
     .rv-sec .bd-sub.rv-lead { margin: -6px 0 10px; }
-    @media (max-width: 640px) { .bd-count { width: 100px; } .rv-table td.rv-diff { width: 58px; } }
+    @media (max-width: 640px) { .bd-count { width: 100px; } .rv-sec .rv-table th:not(:first-child), .rv-sec .rv-table td:not(:first-child) { padding-left: 16px; } }
     .yr-note { font-size: 0.7rem; color: #AAA; margin-top: 14px; line-height: 1.6; }
 
     /* ── Layout ── */
@@ -602,21 +719,26 @@
 
 <div class="app-header">
   <div class="header-left">
-    <span class="app-title">📁<span class="hide-m"> 專案管理</span></span>
+    <span class="app-title"><span class="view-tab on" id="tab-proj" onclick="setView('proj')">專案</span><span class="view-sep"></span><span class="view-tab" id="tab-fin" onclick="setView('fin')">財務</span></span>
     <div class="sync-dot loading" id="sync-dot"></div>
     <span class="lock-hint" id="lock-hint" style="display:none" onclick="showToast('資料庫還沒上鎖：任何人拿到網址都看得到資料')">未上鎖</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;min-width:0">
     <button class="btn-year year-select" id="year-select" title="年度" onclick="event.stopPropagation();openYearMenu(this)"></button>
-    <input class="search-box" type="text" id="search-input" placeholder="搜尋…" oninput="renderAll()">
+    <input class="proj-only search-box" type="text" id="search-input" placeholder="搜尋" oninput="renderAll()">
     <button class="btn-year" id="undo-btn" style="display:none" title="復原上一步（⌘Z）" onclick="undoLast()">↩ 復原</button>
-    <button class="btn-year" onclick="openReceivables()">待收款<span class="cnt" id="rc-count"></span></button>
-    <button class="btn-year" onclick="openYearModal()">全年收入</button>
-    <button class="btn-year" onclick="openCalendar()">時程</button>
+    <button class="btn-year" id="fin-undo" style="display:none" title="復原上一步（⌘Z）" onclick="finUndo()">↩ 復原</button>
+    <button class="btn-year fin-only" onclick="event.stopPropagation();openFinExportMenu(this)">匯出 ▾</button>
+    <button class="btn-year fin-only" onclick="exportBackup()">備份</button>
+    <button class="btn-year proj-only" onclick="openReceivables()">待收款<span class="cnt" id="rc-count"></span></button>
+    <button class="btn-year proj-only" onclick="openYearModal()">專案收入</button>
+    <button class="btn-year proj-only" onclick="openCalendar()">時程</button>
     <button class="btn-year btn-more" onclick="event.stopPropagation();openMoreMenu(this)" title="更多">⋯</button>
-    <button class="btn-new" onclick="openModal()">＋ 新增<span class="hide-m">專案</span></button>
+    <button class="proj-only btn-new" onclick="openModal()" title="新增專案">＋<span class="hide-m"> 新增專案</span></button>
   </div>
 </div>
+
+<div class="fin-wrap" id="fin-wrap"></div>
 
 <div class="app-wrap" id="app-wrap">
   <div class="list-col">
@@ -703,11 +825,11 @@
 
 <div class="modal-overlay" id="yr-modal" onclick="if(event.target===this)closeYearModal()">
   <div class="modal-sheet">
-    <div class="modal-hd"><div class="modal-ttl">全年收入</div><div style="display:flex;align-items:center;gap:6px"><button type="button" class="btn-year" style="padding:4px 10px;font-size:0.74rem" onclick="event.stopPropagation();openYearExportMenu(this)">匯出 ▾</button><button class="btn-x" onclick="closeYearModal()">✕</button></div></div>
+    <div class="modal-hd"><div class="modal-ttl">專案收入</div><div style="display:flex;align-items:center;gap:6px"><button type="button" class="btn-year" style="padding:4px 10px;font-size:0.74rem" onclick="event.stopPropagation();openYearExportMenu(this)">匯出 ▾</button><button class="btn-x" onclick="closeYearModal()">✕</button></div></div>
     <div class="yr-stats">
-      <div class="yr-card"><div class="yr-label">全年營業額</div><div class="yr-value c-income" id="yr-income">$0</div><div class="yr-sub" id="yr-gross"></div></div>
-      <div class="yr-card"><div class="yr-label">全年成本支出</div><div class="yr-value c-expense" id="yr-expense">$0</div></div>
-      <div class="yr-card"><div class="yr-label">全年淨收入</div><div class="yr-value" id="yr-balance">$0</div><div class="yr-sub" id="yr-monthly"></div></div>
+      <div class="yr-card"><div class="yr-label">總營業額</div><div class="yr-value c-income" id="yr-income">$0</div><div class="yr-sub" id="yr-gross"></div></div>
+      <div class="yr-card"><div class="yr-label">專案成本支出</div><div class="yr-value c-expense" id="yr-expense">$0</div></div>
+      <div class="yr-card"><div class="yr-label">專案淨收入</div><div class="yr-value" id="yr-balance">$0</div><div class="yr-sub" id="yr-monthly"></div></div>
     </div>
     <div class="yr-head">
       <div class="yr-head-title">月份趨勢</div>
@@ -909,7 +1031,7 @@
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; // 正在打字時，讓瀏覽器自己復原文字
     if (document.querySelector('.modal-overlay.open')) return;
-    e.preventDefault(); undoLast();
+    e.preventDefault(); if (view === 'fin') finUndo(); else undoLast();
   });
   function setSyncDot(s) { document.getElementById('sync-dot').className = 'sync-dot '+s; }
   function showToast(msg) {
@@ -1361,7 +1483,19 @@
   // ── 更多選單 ──────────────────────────────
   function openMoreMenu(anchor) {
     const items = [];
-    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'year',cls:'',label:'全年收入'},{value:'cal',cls:'',label:'時程'},{sep:true});
+    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'year',cls:'',label:'專案收入'},{value:'cal',cls:'',label:'時程'},{sep:true});
+    if (view === 'fin') {
+      const acts = [];
+      if (window.innerWidth <= 640) {
+        if (finUndoStack.length) acts.push({value:'undo',cls:'',label:'↩ 復原上一步'},{sep:true});
+        acts.push({value:'numbers',cls:'',label:'匯出 Numbers'},{value:'xlsx',cls:'',label:'匯出 Excel'},{value:'backup',cls:backupOverdue()?'dd-warn':'',label:backupLabel()});
+      }
+      if (db && session) acts.push(...(acts.length ? [{sep:true}] : []), {value:'logout',cls:'',label:'登出'});
+      else if (db && dbOpen) acts.push(...(acts.length ? [{sep:true}] : []), {value:'login',cls:'',label:'登入'});
+      if (!acts.length) { showToast('這一頁沒有其他選項'); return; }
+      showInlineDD(anchor, acts, v => ({ undo: finUndo, logout: doLogout, login: () => showLogin(true), backup: exportBackup, numbers: () => exportFinance('numbers'), xlsx: () => exportFinance('xlsx') })[v]());
+      return;
+    }
     if (window.innerWidth <= 640 && undoStack.length) items.push({value:'undo',cls:'',label:'↩ 復原上一步'},{sep:true});
     items.push({value:'missing',cls:'',label:`缺資料檢查（${cases.filter(inViewYear).filter(isMissing).length}）`},{value:'backup',cls:backupOverdue()?'dd-warn':'',label:backupLabel()});
     if (db && session) items.push({sep:true},{value:'logout',cls:'',label:'登出'});
@@ -1374,18 +1508,19 @@
   }
 
   // ── 匯出備份：把全部專案（含項目、成本、發票資訊）下載成一個檔案 ──
-  function exportBackup() {
-    if (!cases.length) { showToast('目前沒有資料可以備份'); return; }
+  async function exportBackup() {
+    await loadFinance();
+    if (!cases.length && !Object.keys(fin.years).length) { showToast('目前沒有資料可以備份'); return; }
     const d = new Date(), pad = n => String(n).padStart(2,'0');
     const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const blob = new Blob([JSON.stringify({ exported_at: d.toISOString(), count: cases.length, cases }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ exported_at: d.toISOString(), count: cases.length, cases, finance: fin.years }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = `專案管理備份-${stamp}.json`;
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(() => URL.revokeObjectURL(a.href), 1000);
     try { localStorage.setItem('boyu_last_backup', String(Date.now())); } catch(e) {}
     updateBackupWarn();
-    showToast(`已下載備份（${cases.length} 個專案）✓`);
+    showToast(`已下載備份（${cases.length} 個專案${Object.keys(fin.years).length ? '＋財務資料' : ''}）✓`);
   }
   // 備份提醒：記在這台裝置上；超過 30 天（或從沒備份過）就在「⋯」上亮紅點
   function backupDays() {
@@ -1887,11 +2022,11 @@
         ? XLSX.write(wb, { bookType:'numbers', type:'array', numbers: window.XLSX_ZAHL_PAYLOAD, compression:true })
         : XLSX.write(wb, { bookType:'xlsx', type:'array' });
       const mime = isNumbers ? 'application/x-iwork-numbers-sffnumbers' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
-      downloadBlob(new Blob([buf], { type: mime }), `全年收入-${year}.${isNumbers?'numbers':'xlsx'}`);
+      downloadBlob(new Blob([buf], { type: mime }), `專案收入-${year}.${isNumbers?'numbers':'xlsx'}`);
       showToast(`已下載 ${year} 年 ${label} 檔（${entries.length} 個專案）✓`);
     } catch (e) {
       const cell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; };
-      downloadBlob(new Blob(['\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' }), `全年收入-${year}.csv`);
+      downloadBlob(new Blob(['\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' }), `專案收入-${year}.csv`);
       showToast(`${label} 檔產生失敗，已改下載 CSV`);
     }
   }
@@ -2007,10 +2142,10 @@
       const up = a > b, txt = isCount ? Math.abs(a-b) + ' 案' : (b ? Math.round(Math.abs(a-b)/Math.abs(b)*100) + '%' : '');
       return `<span class="${up?'c-income':'c-expense'}">${up?'▲':'▼'} ${txt}</span>`;
     };
-    const cmpRow = (label, a, b, isCount, cls = '') => `<tr><td>${label}</td><td class="${cls}">${a == null ? '—' : isCount ? a + ' 案' : money(a)}</td><td class="rv-prev">${!hasPrev || b == null ? '—' : isCount ? b + ' 案' : money(b)}</td><td class="rv-diff">${diff(a, b, isCount)}</td></tr>`;
+    const cmpRow = (label, a, b, isCount, cls = '') => `<tr><td>${label}</td><td class="rv-prev">${!hasPrev || b == null ? '—' : isCount ? b + ' 案' : money(b)}</td><td class="${cls}">${a == null ? '—' : isCount ? a + ' 案' : money(a)}</td><td class="rv-diff">${diff(a, b, isCount)}</td></tr>`;
     const compareHTML = !events.length && !entries.length && !hasPrev ? '' :
       `<div class="bd-title">跟去年比</div>
-      <table class="rv-table"><tr><th></th><th>${year} 年</th><th>${prevYear} 年</th><th>變化</th></tr>
+      <table class="rv-table"><tr><th></th><th>${prevYear} 年</th><th class="rv-cur">${year} 年</th><th>變化</th></tr>
         ${cmpRow('營業額', cur.inc, prev.inc)}${cmpRow('淨收入', cur.net, prev.net, false, cur.net < 0 ? 'c-expense' : 'c-income')}${cmpRow('結案件數', cur.n, prev.n, true)}${cmpRow('平均每案金額', cur.per, prev.per)}${cmpRow('平均日均收入', cur.daily, prev.daily)}
       </table>` + (hasPrev ? '' : `<div class="bd-sub" style="margin-top:8px">${prevYear} 年沒有入帳紀錄，暫時沒得比。</div>`);
 
@@ -2197,6 +2332,225 @@
     if (db) { setSyncDot('loading'); try { const{error}=await db.from('cases').update({[field]:value}).eq('id',c.id); setSyncDot(error?'err':'ok'); if(error) showToast('⚠ 雲端同步失敗：'+error.message); } catch(e){setSyncDot('err');} }
   }
 
+  // ── 財務管理：跟專案無關的營運成本（房租、會計、網域…），以及「今年到底留下多少」──
+  // 收入來自專案管理（實際入帳、未稅），這裡只往下扣營運成本；算出來的數字不會回頭影響專案管理。
+  // 資料一年一份：{ items:[{id,name,amount,cycle}], vat:{'1'..'6': 金額} }，cycle = month（×12）/ bimonth（×6）/ year / once
+  // 存在 Supabase 的 finance 資料表（year 為主鍵）；資料表還沒建立時先存在這台裝置
+  let view = 'proj';
+  const fin = { loaded: false, cloud: false, years: {}, drafts: {} };
+  const FIN_CYCLES = [
+    { key:'month',   title:'每月固定支出', times:12, hint:'每個月都要付的。填一個月的金額，會自動乘以 12。' },
+    { key:'bimonth', title:'每兩個月（會計）', times:6, hint:'會計每兩個月請款一次的服務費。填一期的金額，會自動乘以 6。' },
+    { key:'year',    title:'每年一次', times:1, hint:'一年只付一次的。' },
+    { key:'once',    title:'單次支出', times:1, hint:'不固定的雜支，例如郵資、發票本。' },
+  ];
+  const FIN_SEED = [
+    ['房租', 12800, 'month'], ['勞健保（工會）', 2400, 'month'], ['水電雜費', 1000, 'month'], ['電信費', 599, 'month'], ['iCloud 200G', 90, 'month'], ['Google 雲端 100G', 65, 'month'],
+    ['營業稅申報', 2000, 'bimonth'], ['帳務管理', 1500, 'bimonth'],
+    ['主機租賃', 2412, 'year'], ['網站域名', 500, 'year'], ['扣繳申報（1 月）', 2000, 'year'], ['營所稅申報（5 月）', 3000, 'year'],
+  ];
+  const finId = () => 'f' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  function finYear() { return viewYear === 'all' ? String(new Date().getFullYear()) : String(viewYear); }
+  // 這一年還沒有資料：沿用最近一個有資料的年度的固定項目（單次支出和營業稅不帶），都沒有就用預設清單。要等你改了才會存
+  function finData(y) {
+    if (fin.years[y]) return fin.years[y];
+    if (fin.drafts[y]) return fin.drafts[y]; // 同一份草稿要重複用，畫面上每一列的編號才對得起來
+    const prev = Object.keys(fin.years).filter(k => k < y).sort().pop() || Object.keys(fin.years).sort()[0];
+    const items = prev ? fin.years[prev].items.filter(t => t.cycle !== 'once').map(t => ({ ...t, id: finId() }))
+                       : FIN_SEED.map(([name, amount, cycle]) => ({ id: finId(), name, amount, cycle }));
+    return fin.drafts[y] = { items, vat: {}, draft: prev ? `沿用 ${prev} 年的項目` : '預設項目' };
+  }
+  const finTimes = cycle => (FIN_CYCLES.find(g => g.key === cycle) || {}).times || 1;
+  const finAnnual = d => d.items.reduce((s, t) => s + (Number(t.amount) || 0) * finTimes(t.cycle), 0);
+  async function loadFinance() {
+    if (fin.loaded) return;
+    try { const r = localStorage.getItem('boyu_finance'); if (r) fin.years = JSON.parse(r) || {}; } catch (e) {}
+    if (!db || !session) { fin.loaded = !db; return; } // 還沒登入：先不算載入完成，登入後再讀雲端
+    fin.loaded = true;
+    try {
+      const { data, error } = await db.from('finance').select('*');
+      if (error) return; // 資料表還沒建立：先用這台裝置上的
+      fin.cloud = true;
+      if (data.length) { fin.years = {}; data.forEach(r => { fin.years[r.year] = r.data; }); }
+      else for (const y of Object.keys(fin.years)) await db.from('finance').upsert({ year: y, data: fin.years[y], updated_at: new Date().toISOString() }); // 之前只存在這台裝置的，補傳上去
+      localStorage.setItem('boyu_finance', JSON.stringify(fin.years));
+    } catch (e) {}
+  }
+  // 匯出這一年的財務總表（Numbers 或 Excel，失敗改下載 CSV）：上面是淨收入怎麼算出來的，中間是各項營運成本，最下面是代繳營業稅
+  function openFinExportMenu(anchor) {
+    showInlineDD(anchor, [{value:'numbers',cls:'',label:'Numbers'},{value:'xlsx',cls:'',label:'Excel'}], exportFinance);
+  }
+  async function exportFinance(kind) {
+    await loadFinance();
+    const y = finYear(), d = finData(y);
+    const ev = cashEvents().filter(e => e.date.startsWith(y));
+    const rev = ev.reduce((s, e) => s + e.inc, 0), pcost = ev.reduce((s, e) => s + e.exp, 0), op = finAnnual(d);
+    const rows = [[`${y} 年財務總表`], [], ['項目', '', '', '', '金額'],
+      ['專案營業額（未稅）', '', '', '', rev], ['專案成本', '', '', '', pcost], ['營運成本（全年）', '', '', '', op], ['淨收入', '', '', '', rev - pcost - op],
+      [], ['週期', '名稱', '每次金額', '一年次數', '全年金額']];
+    for (const g of FIN_CYCLES) for (const t of d.items.filter(x => x.cycle === g.key)) rows.push([g.title, t.name || '', Number(t.amount) || 0, g.times, (Number(t.amount) || 0) * g.times]);
+    rows.push(['營運成本合計', '', '', '', op], [], ['代繳營業稅（不算成本）', '期別', '', '', '金額']);
+    for (let p = 1; p <= 6; p++) rows.push(['', `${p*2-1}–${p*2} 月`, '', '', Number(d.vat?.[p]) || 0]);
+    rows.push(['代繳營業稅合計', '', '', '', Object.values(d.vat || {}).reduce((s, v) => s + (Number(v) || 0), 0)]);
+    const isNumbers = kind === 'numbers', label = isNumbers ? 'Numbers' : 'Excel';
+    showToast(`正在產生 ${label} 檔…`);
+    try {
+      const XLSX = await loadXLSX(isNumbers);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:24},{wch:26},{wch:12},{wch:10},{wch:14}];
+      for (let r = 1; r <= rows.length; r++) for (const col of ['C','E']) { const cell = ws[col + r]; if (cell && typeof cell.v === 'number') cell.z = '#,##0'; }
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `${y}年財務`);
+      const buf = isNumbers
+        ? XLSX.write(wb, { bookType:'numbers', type:'array', numbers: window.XLSX_ZAHL_PAYLOAD, compression:true })
+        : XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const mime = isNumbers ? 'application/x-iwork-numbers-sffnumbers' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      downloadBlob(new Blob([buf], { type: mime }), `財務總表-${y}.${isNumbers ? 'numbers' : 'xlsx'}`);
+      showToast(`已下載 ${y} 年財務總表（${label}）✓`);
+    } catch (e) {
+      const cell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; };
+      downloadBlob(new Blob(['\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' }), `財務總表-${y}.csv`);
+      showToast(`${label} 檔產生失敗，已改下載 CSV`);
+    }
+  }
+  // 財務頁的復原：每次修改前把整份財務資料留一份（最多 30 步），跟專案管理的復原各管各的
+  const finUndoStack = [];
+  function finSnap() { finUndoStack.push(JSON.stringify(fin.years)); if (finUndoStack.length > 30) finUndoStack.shift(); updateFinUndo(); }
+  function updateFinUndo() { const b = document.getElementById('fin-undo'); if (b) b.style.display = finUndoStack.length ? '' : 'none'; }
+  async function finUndo() {
+    if (!finUndoStack.length) { showToast('沒有可以復原的動作'); return; }
+    const prev = JSON.parse(finUndoStack.pop()), cur = fin.years;
+    const changed = [...new Set([...Object.keys(prev), ...Object.keys(cur)])].filter(y => JSON.stringify(prev[y]) !== JSON.stringify(cur[y]));
+    fin.years = prev; fin.drafts = {};
+    try { localStorage.setItem('boyu_finance', JSON.stringify(fin.years)); } catch (e) {}
+    updateFinUndo(); renderFinance(); showToast('已復原上一步 ✓');
+    if (!db || !session || !fin.cloud) return;
+    setSyncDot('loading');
+    let failed = false;
+    for (const y of changed) {
+      try {
+        const { error } = await (prev[y] ? db.from('finance').upsert({ year: y, data: prev[y], updated_at: new Date().toISOString() }) : db.from('finance').delete().eq('year', y));
+        if (error) failed = true;
+      } catch (e) { failed = true; }
+    }
+    setSyncDot(failed ? 'err' : 'ok');
+    if (failed) showToast('⚠ 畫面已復原，但雲端同步失敗，請重新整理確認');
+  }
+  async function finSave(y, d) {
+    delete d.draft; fin.years[y] = d; fin.drafts = {}; // 其他年度的草稿可能是沿用這一年的，下次重新產生
+    try { localStorage.setItem('boyu_finance', JSON.stringify(fin.years)); } catch (e) {}
+    if (!db || !session || !fin.cloud) return;
+    setSyncDot('loading');
+    try { const { error } = await db.from('finance').upsert({ year: y, data: d, updated_at: new Date().toISOString() }); setSyncDot(error ? 'err' : 'ok'); if (error) showToast('⚠ 雲端同步失敗：' + error.message); }
+    catch (e) { setSyncDot('err'); }
+  }
+  async function setView(v) {
+    view = v;
+    document.body.classList.toggle('fin-mode', v === 'fin');
+    document.getElementById('tab-proj').classList.toggle('on', v === 'proj');
+    document.getElementById('tab-fin').classList.toggle('on', v === 'fin');
+    closeInlineDD();
+    if (v === 'fin') { if (viewingId) closePanel(); window.scrollTo(0, 0); await loadFinance(); }
+    renderAll();
+  }
+  function finEdit(id, field, input) {
+    const y = finYear(), d = finData(y), t = d.items.find(x => x.id === id); if (!t) return;
+    const val = field === 'amount' ? (Math.round(Number(input.value.replace(/[^\d.]/g, ''))) || 0) : input.value.trim();
+    if (field === 'amount') input.value = val ? val.toLocaleString() : '';
+    if (t[field] === val) return;
+    finSnap(); t[field] = val; finSave(y, d); renderFinance(true);
+  }
+  function finAdd(cycle) {
+    const y = finYear(), d = finData(y), t = { id: finId(), name: '', amount: 0, cycle };
+    finSnap(); d.items.push(t); finSave(y, d); renderFinance();
+    document.querySelector(`#fin-wrap [data-fin="${t.id}"] .fin-name`)?.focus();
+  }
+  function finDel(id) {
+    const y = finYear(), d = finData(y);
+    finSnap(); d.items = d.items.filter(x => x.id !== id); finSave(y, d); renderFinance();
+  }
+  function finVat(p, input) {
+    const y = finYear(), d = finData(y), val = Math.round(Number(input.value.replace(/[^\d.]/g, ''))) || 0;
+    input.value = val ? val.toLocaleString() : '';
+    if ((Number(d.vat[p]) || 0) === val) return;
+    finSnap(); d.vat = { ...d.vat, [p]: val }; finSave(y, d); renderFinance(true);
+  }
+  // patch = true：只把會變的數字（標了 data-live 的地方）換掉，輸入框原封不動
+  function renderFinance(patch) {
+    const wrap = document.getElementById('fin-wrap'); if (!wrap || view !== 'fin') return;
+    const y = finYear(), d = finData(y), money = n => (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString();
+    const ev = cashEvents().filter(e => e.date.startsWith(y));
+    const rev = ev.reduce((s, e) => s + e.inc, 0), pcost = ev.reduce((s, e) => s + e.exp, 0), op = finAnnual(d), net = rev - pcost - op;
+    // 平均月薪：今年還沒過完，收入只到目前為止，營運成本也只算到目前這幾個月才公平
+    const now = new Date(), m = +y < now.getFullYear() ? 12 : +y === now.getFullYear() ? now.getMonth() + 1 : 0;
+    const monthly = m ? Math.round((rev - pcost - op * m / 12) / m) : null;
+    // 每月收支：專案收入＝那個月實際入帳 − 那個月的專案成本；營運成本用全年平均攤到每個月（全年 ÷ 12）
+    const opMonth = op / 12, curM = +y === now.getFullYear() ? now.getMonth() + 1 : 0;
+    const months = Array.from({ length: 12 }, (_, i) => {
+      const k = `${y}-${String(i + 1).padStart(2, '0')}`, me = ev.filter(e => e.date.startsWith(k));
+      const pin = me.reduce((s, e) => s + e.inc - e.exp, 0);
+      return { m: i + 1, pin, net: pin - opMonth };
+    });
+    const netCls = n => Math.round(n) > 0 ? 'c-income' : Math.round(n) < 0 ? 'c-expense' : '';
+    const monthsCard = `<div class="rv-sec sec-months" title="專案收入是那個月實際入帳的金額（未稅）扣掉專案成本；營運成本是全年合計平均攤到每個月。">
+        <div class="fin-sec-hd"><div class="bd-title">每月收支</div></div>
+        <div class="fin-body" data-live>
+          <div class="fm-row fm-head"><span>月份</span><span>專案收入</span><span>營運成本</span><span>淨收入</span></div>
+          ${months.map(r => `<div class="fm-row${r.m === curM ? ' now' : ''}${curM && r.m > curM && !r.pin ? ' dim' : ''}"><span>${r.m} 月</span><span${r.pin ? '' : ' class="fm-zero"'}>${r.pin ? money(r.pin) : '0'}</span><span class="fm-op">${money(opMonth)}</span><b class="${netCls(r.net)}">${money(r.net)}</b></div>`).join('')}
+        </div>
+      </div>`;
+    const cm = curM ? months[curM - 1] : null;
+    const nowCard = cm ? `<div class="yr-card fin-now"><div class="yr-label">${curM} 月淨收入</div><div class="yr-value ${netCls(cm.net)}">${money(cm.net)}</div><div class="yr-sub">專案收入 ${money(cm.pin)} − 營運 ${money(opMonth)}</div></div>` : '';
+    const key = h => `onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"`;
+    const row = t => `<div class="fin-row" data-fin="${t.id}">
+        <input class="prop-input fin-name" placeholder="名稱" value="${esc(t.name).replace(/"/g,'&quot;')}" onblur="finEdit('${t.id}','name',this)" ${key()}>
+        <input class="prop-input fin-amt" inputmode="numeric" placeholder="0" value="${Number(t.amount) ? Number(t.amount).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finEdit('${t.id}','amount',this)" ${key()}>
+        ${finTimes(t.cycle) > 1 ? `<span class="fin-yearly" data-live>一年 ${money((Number(t.amount)||0) * finTimes(t.cycle))}</span>` : ''}
+        <button class="fin-x" onclick="finDel('${t.id}')" title="刪除這一筆">✕</button>
+      </div>`;
+    // 卡片順序配合三欄排法：每月（左欄整欄）｜每兩個月、每年（中欄）｜單次、營業稅（右欄）
+    const card = g => {
+      const items = d.items.filter(t => t.cycle === g.key), sum = items.reduce((s, t) => s + (Number(t.amount) || 0) * g.times, 0);
+      return `<div class="rv-sec sec-${g.key}" title="${g.hint}">
+        <div class="fin-sec-hd"><div class="bd-title">${g.title}</div><small>全年</small><b data-live>${money(sum)}</b></div>
+        <div class="fin-body">${items.map(row).join('')}<button class="fin-add" onclick="finAdd('${g.key}')">＋ 新增</button></div>
+      </div>`;
+    };
+    const G = k => FIN_CYCLES.find(g => g.key === k);
+    const vatSum = Object.values(d.vat || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+    const vat = `<div class="rv-sec sec-vat">
+        <div class="fin-sec-hd"><div class="bd-title">代繳營業稅</div><small>全年</small><b style="color:#AAA" data-live>${money(vatSum)}</b></div>
+        <div class="fin-vat-note">代收再轉交國稅局的稅，<b style="color:#888">不算成本</b>、不會從淨收入扣，這裡只做紀錄。</div>
+        <div class="fin-body"><div class="fin-vat">${[1,2,3,4,5,6].map(p => `<div class="fin-row"><label>${p*2-1}–${p*2} 月</label><input class="prop-input fin-amt" style="flex:1;width:auto;min-width:0;margin-left:0" inputmode="numeric" placeholder="0" value="${Number(d.vat?.[p]) ? Number(d.vat[p]).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finVat('${p}',this)" ${key()}></div>`).join('')}</div></div>
+      </div>`;
+    const banner = (!db || !session) ? '' : fin.cloud ? '' : `<div class="fin-banner">財務資料的雲端資料表還沒建立，目前只存在這台裝置上，換手機或清除瀏覽器資料就看不到了。</div>`;
+    const keep = document.activeElement && wrap.contains(document.activeElement) ? null : [...wrap.querySelectorAll('.fin-body')].map(b => b.scrollTop);
+    const html = `${banner}
+      <div class="fin-panel" data-live><div class="fin-top">
+        <div class="fin-hero" title="${d.draft ? `目前顯示的是${d.draft}，改了任何一格之後才會存成 ${y} 年自己的資料。` : '專案營業額 − 專案成本 − 營運成本'}">
+          <div class="fin-hero-label">${y} 年淨收入</div>
+          <div class="fin-hero-value${net < 0 ? ' neg' : net > 0 ? ' pos' : ''}">${net > 0 ? '+' : ''}${money(net)}</div>
+          <div class="fin-hero-sub">${monthly == null ? '&nbsp;' : `平均月薪 ${money(monthly)}`}</div>
+        </div>
+        ${nowCard}
+        <div class="yr-card"><div class="yr-label">專案營業額</div><div class="yr-value c-income">${money(rev)}</div></div>
+        <div class="yr-card"><div class="yr-label">− 專案成本</div><div class="yr-value c-expense">${money(pcost)}</div></div>
+        <div class="yr-card"><div class="yr-label">− 營運成本（全年）</div><div class="yr-value c-expense">${money(op)}</div></div>
+      </div>
+</div>
+      <div class="fin-grid">${monthsCard}${card(G('month'))}${card(G('bimonth'))}${card(G('once'))}${card(G('year'))}${vat}</div>`;
+    if (patch && wrap.firstElementChild) {
+      const tmp = document.createElement('div'); tmp.innerHTML = html;
+      const a = wrap.querySelectorAll('[data-live]'), b = tmp.querySelectorAll('[data-live]');
+      if (a.length === b.length) { a.forEach((el, i) => { if (el.innerHTML !== b[i].innerHTML) el.innerHTML = b[i].innerHTML; }); updateFinUndo(); return; }
+    }
+    wrap.innerHTML = html;
+    if (keep) wrap.querySelectorAll('.fin-body').forEach((b, i) => { b.scrollTop = keep[i] || 0; });
+    updateFinUndo();
+  }
+
+  // ── Render all  }
+
   // ── Render all ────────────────────────────
   // 首頁排序：名稱開頭的編號由小到大（015-1 排在 015 後面、016 前面）；沒有編號的排最前面，依筆劃
   const strokeOrder = new Intl.Collator('zh-Hant-u-co-stroke');
@@ -2207,6 +2561,7 @@
     return x[0] - y[0] || x[1] - y[1] || strokeOrder.compare(a.name||'', b.name||'');
   }
   function renderAll() {
+    if (view === 'fin') renderFinance();
     const q = document.getElementById('search-input').value.trim().toLowerCase();
     let list = q ? cases.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.client||'').toLowerCase().includes(q)) : [...cases];
     const years = [...new Set([String(new Date().getFullYear()), ...cases.map(caseYear)])].sort((a,b)=>b.localeCompare(a));
