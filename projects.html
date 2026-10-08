@@ -28,6 +28,9 @@
     .btn-new:hover { background: #333; }
     .btn-year { padding: 6px 14px; background: white; color: #1C1C1C; border: 1px solid #E4E4E0; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
     .btn-year:hover { background: #F7F6F3; }
+    .year-select { flex-shrink: 0; }
+    /* 原生下拉選單展開時指定黑體，避免變成明體 */
+    option { font-family: 'PingFang TC', 'Heiti TC', 'Microsoft JhengHei', 'Noto Sans TC', sans-serif !important; }
     .btn-year .cnt { color: #C62828; margin-left: 4px; }
     .btn-more { padding: 6px 10px; letter-spacing: 1px; }
     .lock-hint { font-size: 0.68rem; color: #E67E00; background: #FFF3E0; padding: 2px 8px; border-radius: 10px; cursor: pointer; white-space: nowrap; }
@@ -61,9 +64,13 @@
     .rc-amt { text-align: right; flex-shrink: 0; }
     .rc-amt b { display: block; font-size: 0.86rem; margin-bottom: 3px; }
     .rc-amt .badge { font-size: 0.66rem; padding: 2px 8px; cursor: inherit; }
+    .rc-copy { background: none; border: none; color: #C4C4C0; border-radius: 8px; width: 32px; height: 32px; display: flex; align-items: center; justify-content: center; cursor: pointer; flex-shrink: 0; transition: color 0.12s, background 0.12s; }
+    .rc-copy:hover { background: #F0F0EE; color: #777; }
+    .rc-amt small { font-size: 0.66rem; color: #AAA; margin-right: 6px; }
     @media (max-width: 640px) {
       .app-header { padding: 0 12px; gap: 8px; }
-      .app-header .btn-year:not(.btn-more) { display: none; }
+      .app-header .btn-year:not(.btn-more):not(.year-select) { display: none; }
+      .hide-m { display: none; }
       .search-box { width: auto; flex: 1; min-width: 0; }
       .lock-hint { display: none; }
     }
@@ -90,6 +97,15 @@
     .mc-bar-expense { background: #EF5350; }
     .mc-amounts { display: flex; flex-direction: column; gap: 1px; width: 84px; text-align: right; flex-shrink: 0; }
     .mc-amounts span { font-size: 0.68rem; font-weight: 600; }
+    .bd-title { font-size: 0.88rem; font-weight: 600; margin: 22px 0 12px; }
+    .bd-row { display: flex; align-items: center; gap: 8px; margin-bottom: 9px; }
+    .bd-label { font-size: 0.75rem; color: #444; width: 150px; flex-shrink: 0; display: flex; align-items: baseline; gap: 4px; min-width: 0; }
+    .bd-label span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+    .bd-label small { color: #BBB; font-size: 0.66rem; flex-shrink: 0; white-space: nowrap; }
+    .bd-bar-wrap { flex: 1; background: #F0F0F0; border-radius: 3px; height: 6px; overflow: hidden; }
+    .bd-amt { width: 118px; text-align: right; flex-shrink: 0; font-size: 0.72rem; font-weight: 600; color: #2E7D32; white-space: nowrap; }
+    .bd-amt small { color: #AAA; font-weight: 500; margin-left: 6px; }
+    @media (max-width: 640px) { .bd-label { width: 104px; } .bd-amt { width: 100px; } }
     .yr-note { font-size: 0.7rem; color: #AAA; margin-top: 14px; line-height: 1.6; }
 
     /* ── Layout ── */
@@ -159,10 +175,10 @@
 
     /* ── Table ── */
     .proj-table { background: white; border-radius: 10px; box-shadow: 0 1px 4px rgba(0,0,0,0.06); overflow: hidden; }
-    .table-head { display: grid; grid-template-columns: 2fr 92px 88px 218px 108px 72px 1fr 70px; padding: 0 10px; border-bottom: 1px solid #F0F0EC; }
+    .table-head { display: grid; grid-template-columns: 2fr 92px 88px 218px 96px 72px 1fr 70px; padding: 0 10px; border-bottom: 1px solid #F0F0EC; }
     .th { padding: 8px 7px; font-size: 0.78rem; color: #BBB; font-weight: 500; }
     .table-row {
-      display: grid; grid-template-columns: 2fr 92px 88px 218px 108px 72px 1fr 70px;
+      display: grid; grid-template-columns: 2fr 92px 88px 218px 96px 72px 1fr 70px;
       padding: 0 10px; border-bottom: 1px solid #F5F5F2;
       cursor: pointer; transition: background 0.1s; align-items: center; min-height: 48px;
     }
@@ -213,6 +229,7 @@
     .b-pay-已收頭款{background:#FFF0E0;color:#C15000}
     .b-pay-部分付款{background:#FFF0E0;color:#C15000}
     .b-pay-已結清{background:#E6F6EC;color:#237843}
+    .b-pay-互惠{background:#F0F0F0;color:#888}
     .b-inv-未開{background:#FFEBEE;color:#C62828}
     .b-inv-已寄出{background:#E3F2FD;color:#1565C0}
     .b-inv-頭款已開{background:#E3F2FD;color:#1565C0}
@@ -275,10 +292,10 @@
     .panel-title { font-size: 1.4rem; font-weight: 700; line-height: 1.3; margin-bottom: 4px; outline: none; border-radius: 6px; padding: 2px 6px; margin-left: -6px; cursor: text; }
     .panel-title:hover { background: #F7F6F3; }
     .panel-title:focus { background: #EEEEED; }
-    /* 發票資訊視窗：電腦版置中，手機維持從底部滑出 */
+    /* 所有彈出視窗：電腦版置中，手機維持從底部滑出 */
     @media (min-width: 601px) {
-      #inv-modal, #yr-modal, #rc-modal { align-items: center; padding: 24px; }
-      #inv-modal .modal-sheet, #yr-modal .modal-sheet, #rc-modal .modal-sheet { border-radius: 20px; max-width: 640px; max-height: calc(100vh - 48px); }
+      div.modal-overlay { align-items: center; padding: 24px; }
+      .modal-overlay .modal-sheet { border-radius: 20px; max-width: 640px; max-height: calc(100vh - 48px); }
     }
     .inv-export { background: none; border: none; font-size: 0.74rem; color: #999; cursor: pointer; font-family: inherit; padding: 4px 8px; border-radius: 6px; }
     .inv-export:hover { color: #1C1C1C; background: #F7F6F3; }
@@ -393,16 +410,17 @@
 
 <div class="app-header">
   <div class="header-left">
-    <span class="app-title">📁 專案管理</span>
+    <span class="app-title">📁<span class="hide-m"> 專案管理</span></span>
     <div class="sync-dot loading" id="sync-dot"></div>
     <span class="lock-hint" id="lock-hint" style="display:none" onclick="showToast('資料庫還沒上鎖：任何人拿到網址都看得到資料')">未上鎖</span>
   </div>
   <div style="display:flex;align-items:center;gap:10px;min-width:0">
+    <button class="btn-year year-select" id="year-select" title="年度" onclick="event.stopPropagation();openYearMenu(this)"></button>
     <input class="search-box" type="text" id="search-input" placeholder="搜尋…" oninput="renderAll()">
     <button class="btn-year" onclick="openReceivables()">待收款<span class="cnt" id="rc-count"></span></button>
     <button class="btn-year" onclick="openYearModal()">全年收入</button>
     <button class="btn-year btn-more" onclick="event.stopPropagation();openMoreMenu(this)" title="更多">⋯</button>
-    <button class="btn-new" onclick="openModal()">＋ 新增專案</button>
+    <button class="btn-new" onclick="openModal()">＋ 新增<span class="hide-m">專案</span></button>
   </div>
 </div>
 
@@ -423,7 +441,7 @@
 
     <div class="fsec">基本資訊</div>
     <div class="fg"><span class="fl">專案名稱 *</span><input type="text" id="m-name" placeholder="例：故宮書法展"></div>
-    <div class="fg"><span class="fl">客戶 / 單位</span><input type="text" id="m-client" placeholder="例：國立故宮博物院"></div>
+    <div class="fg"><span class="fl">客戶 / 單位</span><input type="text" id="m-client" list="client-list" autocomplete="off" placeholder="例：國立故宮博物院"></div>
     <div class="fgrid3">
       <div class="fg" style="margin-bottom:0"><span class="fl">類別</span><select id="m-category"><option>藝術</option><option>設計</option><option>空間</option><option>其他</option></select></div>
       <div class="fg" style="margin-bottom:0"><span class="fl">狀態</span><select id="m-status"><option>接洽中</option><option>進行中</option><option>暫停</option><option>終止</option><option>已完成</option></select></div>
@@ -440,18 +458,10 @@
     <div class="fsec">財務</div>
     <div class="fgrid2">
       <div class="fg" style="margin-bottom:0"><span class="fl">報價金額（元）</span><input type="number" id="m-quote" placeholder="0" min="0" inputmode="numeric"></div>
-      <div class="fg" style="margin-bottom:0"><span class="fl">付款狀態</span><select id="m-pay-status"><option>未收款</option><option>已收頭款</option><option>部分付款</option><option>已結清</option></select></div>
+      <div class="fg" style="margin-bottom:0"><span class="fl">付款狀態</span><select id="m-pay-status"><option>未收款</option><option>已收頭款</option><option>部分付款</option><option>已結清</option><option>互惠</option></select></div>
     </div>
 
-    <div class="fsec">聯絡資訊</div>
-    <div class="fgrid2">
-      <div class="fg" style="margin-bottom:0"><span class="fl">聯絡窗口</span><input type="text" id="m-contact-name" placeholder="姓名"></div>
-      <div class="fg" style="margin-bottom:0"><span class="fl">聯絡方式</span><input type="text" id="m-contact-info" placeholder="電話 / Email / Line"></div>
-    </div>
-
-    <div class="fsec">備註</div>
-    <div class="fg"><textarea id="m-note" placeholder="專案說明…" style="min-height:52px"></textarea></div>
-    <button class="btn-p" onclick="saveCase()">儲存專案</button>
+    <button class="btn-p" style="margin-top:8px" onclick="saveCase()">儲存專案</button>
   </div>
 </div>
 
@@ -484,7 +494,7 @@
 
 <div class="modal-overlay" id="yr-modal" onclick="if(event.target===this)closeYearModal()">
   <div class="modal-sheet">
-    <div class="modal-hd"><div class="modal-ttl">全年收入</div><button class="btn-x" onclick="closeYearModal()">✕</button></div>
+    <div class="modal-hd"><div class="modal-ttl">全年收入</div><div style="display:flex;align-items:center;gap:6px"><button type="button" class="btn-year" style="padding:4px 10px;font-size:0.74rem" onclick="event.stopPropagation();openYearExportMenu(this)">匯出 ▾</button><button class="btn-x" onclick="closeYearModal()">✕</button></div></div>
     <div class="yr-stats">
       <div class="yr-card"><div class="yr-label">全年收入</div><div class="yr-value c-income" id="yr-income">$0</div></div>
       <div class="yr-card"><div class="yr-label">全年支出</div><div class="yr-value c-expense" id="yr-expense">$0</div></div>
@@ -495,6 +505,7 @@
       <select id="yr-year" onchange="renderYearStats()"></select>
     </div>
     <div id="yr-chart"></div>
+    <div id="yr-breakdown"></div>
     <div class="yr-note" id="yr-note"></div>
   </div>
 </div>
@@ -504,7 +515,6 @@
     <div class="modal-hd"><div class="modal-ttl">待收款</div><button class="btn-x" onclick="closeReceivables()">✕</button></div>
     <div class="rc-total"><span id="rc-total-label"></span><b id="rc-total-amt"></b></div>
     <div id="rc-list"></div>
-    <div class="yr-note">列出狀態「已完成」但付款還不是「已結清」的專案。金額是整筆報價，已收的頭款沒有扣掉。天數從結束日期算起。</div>
   </div>
 </div>
 
@@ -520,6 +530,7 @@
   </div>
 </div>
 
+<datalist id="client-list"></datalist>
 <div id="toast"></div>
 
 <script>
@@ -537,6 +548,16 @@
   // ── Init ──────────────────────────────────
   // 登入狀態：session 有值＝已登入；dbOpen＝資料庫還沒上鎖（不登入也讀得到）
   let session = null, dbOpen = false, missingOnly = false;
+  // 首頁年度：預設今年；'all' 代表全部。專案屬於哪一年看結束日期（沒有就看開始日期，再沒有就看建立日期）
+  let viewYear = String(new Date().getFullYear());
+  function caseYear(c) { return (c.end_date || c.start_date || c.created_at || '').slice(0,4) || String(new Date().getFullYear()); }
+  function inViewYear(c) { return viewYear === 'all' || caseYear(c) === viewYear; }
+  let viewYears = [];
+  function openYearMenu(anchor) {
+    const mark = v => v === viewYear ? '　✓' : '';
+    showInlineDD(anchor, [...viewYears.map(y=>({value:y,cls:'',label:y+'年'+mark(y)})), {sep:true}, {value:'all',cls:'',label:'全部'+mark('all')}],
+      v => { viewYear = v; missingOnly = false; renderAll(); });
+  }
   async function init() {
     try { if (window.supabase) db = window.supabase.createClient(SB_URL, SB_KEY); } catch(e) {}
     if (!db) { startApp(); return; }
@@ -831,6 +852,7 @@
   const PAY_DD_ITEMS = [
     {header:'付款狀態'},{value:'未收款',cls:'b-pay-未收款',label:'未收款'},{value:'已收頭款',cls:'b-pay-已收頭款',label:'已收頭款'},
     {value:'部分付款',cls:'b-pay-部分付款',label:'部分付款'},{value:'已結清',cls:'b-pay-已結清',label:'已結清'},
+    {value:'互惠',cls:'b-pay-互惠',label:'互惠'},
   ];
   const TASK_STATUS_ITEMS = [
     {header:'狀態'},{value:'未開始',cls:'b-task-未開始',label:'未開始'},
@@ -853,7 +875,7 @@
   function openMoreMenu(anchor) {
     const items = [];
     if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'year',cls:'',label:'全年收入'},{sep:true});
-    items.push({value:'missing',cls:'',label:`缺資料檢查（${cases.filter(isMissing).length}）`},{value:'backup',cls:'',label:'匯出備份'});
+    items.push({value:'missing',cls:'',label:`缺資料檢查（${cases.filter(inViewYear).filter(isMissing).length}）`},{value:'backup',cls:'',label:'匯出備份'});
     if (db && session) items.push({sep:true},{value:'logout',cls:'',label:'登出'});
     else if (db && dbOpen) items.push({sep:true},{value:'login',cls:'',label:'登入'});
     showInlineDD(anchor, items, v => ({
@@ -897,30 +919,88 @@
     return { cls:'', note:'' };
   }
 
-  // ── 待收款：已完成但還沒結清 ──────────────
+  // 還沒收的金額：已收頭款的扣掉頭款（頭款固定算報價的一半），其他狀態算整筆報價
+  // 有填「已收金額」就用實際數字；沒填的話，已收頭款先以報價的一半估算
+  const DEPOSIT_RATE = 0.5;
+  function caseReceived(c) { return Number((parseTasks(c.tasks).find(t=>t.type==='payment')||{}).received) || 0; }
+  function amountDue(c) {
+    const q = Number(c.quote_amount) || 0;
+    if (c.payment_status === '已結清' || c.payment_status === '互惠') return 0;
+    const got = caseReceived(c);
+    if (got) return Math.max(q - got, 0);
+    return payLabel(c.payment_status) === '已收頭款' ? q - Math.round(q * DEPOSIT_RATE) : q;
+  }
+  function dueHintHTML(c) {
+    const q = Number(c.quote_amount) || 0;
+    if (!q || c.payment_status === '已結清' || c.payment_status === '互惠') return '';
+    const est = !caseReceived(c) && payLabel(c.payment_status) === '已收頭款';
+    return `待收 $${amountDue(c).toLocaleString()}${est ? '（頭款以一半估算）' : ''}`;
+  }
+  function saveReceived(input) {
+    const c = cases.find(x=>x.id===viewingId); if (!c) return;
+    const n = Math.round(Number(input.value.replace(/[^\d.]/g,''))) || 0;
+    input.value = n ? '$' + n.toLocaleString() : '';
+    if (n !== caseReceived(c)) {
+      const all = parseTasks(c.tasks).filter(t=>t.type!=='payment');
+      c.tasks = JSON.stringify(n ? [...all, { type:'payment', received:n }] : all);
+      syncTasks(c); renderAll();
+    }
+    const hint = document.getElementById('due-hint'); if (hint) hint.textContent = dueHintHTML(c);
+  }
+  // ── 待收款：已完成或進行中，但還沒結清 ──────
+  // 已完成的排前面（拖越久越上面），進行中的排後面
   function receivables() {
     return cases
-      .filter(c => c.status === '已完成' && c.payment_status !== '已結清' && Number(c.quote_amount) > 0)
-      .map(c => { const d = c.end_date || c.start_date; return { c, days: d ? -daysFromToday(d) : null }; })
-      .sort((a,b) => (b.days ?? -1) - (a.days ?? -1));
+      .filter(c => inViewYear(c) && (c.status === '已完成' || c.status === '進行中') && c.payment_status !== '已結清' && c.payment_status !== '互惠' && Number(c.quote_amount) > 0)
+      .map(c => { const d = c.end_date || c.start_date; return { c, due: amountDue(c), done: c.status === '已完成', days: c.status === '已完成' && d ? -daysFromToday(d) : null }; })
+      .sort((a,b) => (b.done - a.done) || ((b.days ?? -1) - (a.days ?? -1)));
   }
   function openReceivables() {
     const list = receivables();
-    const total = list.reduce((s,r)=>s+Number(r.c.quote_amount),0);
-    document.getElementById('rc-total-label').textContent = `${list.length} 個專案還沒收齊`;
+    const total = list.reduce((s,r)=>s+r.due,0);
+    document.getElementById('rc-total-label').textContent = `${viewYear === 'all' ? '全部年度' : viewYear + ' 年'}・${list.length} 個專案還沒收齊`;
     document.getElementById('rc-total-amt').textContent = 'NT$ ' + total.toLocaleString();
-    document.getElementById('rc-list').innerHTML = list.map(({c,days}) => {
+    document.getElementById('rc-list').innerHTML = list.map(({c,due,done,days}) => {
       const pay = payLabel(c.payment_status) || '未收款';
-      const when = days === null ? '沒有日期' : days <= 0 ? '剛完成' : `<span class="${days>=30?'late':''}">完成後 ${days} 天</span>`;
+      const when = !done ? '進行中' : days === null ? '已完成・沒有日期' : days <= 0 ? '剛完成' : `<span class="${days>=30?'late':''}">完成後 ${days} 天</span>`;
       return `<div class="rc-row" onclick="closeReceivables();if(viewingId!=='${c.id}')openPanel('${c.id}')">
         <div class="rc-main">
           <div class="rc-name">${esc(c.name)}</div>
           <div class="rc-sub">${c.client?esc(c.client)+'・':''}${when}</div>
         </div>
-        <div class="rc-amt"><b>NT$ ${Number(c.quote_amount).toLocaleString()}</b><span class="badge b-pay-${pay}">${pay}</span></div>
+        <div class="rc-amt"><b>NT$ ${due.toLocaleString()}</b>${due !== Number(c.quote_amount) ? `<small>報價 ${Number(c.quote_amount).toLocaleString()}</small>` : ''}<span class="badge b-pay-${pay}">${pay}</span></div>
+        <button type="button" class="rc-copy" title="複製催款訊息" aria-label="複製催款訊息" onclick="event.stopPropagation();copyReminder('${c.id}')"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a1.5 1.5 0 0 0-1.5 1.5v.6A6 6 0 0 0 6 10v4.2l-1.6 2.4A1 1 0 0 0 5.2 18h13.6a1 1 0 0 0 .8-1.4L18 14.2V10a6 6 0 0 0-4.5-5.9v-.6A1.5 1.5 0 0 0 12 2z"/><path d="M9.5 19.5a2.5 2.5 0 0 0 5 0z"/></svg></button>
       </div>`;
-    }).join('') || '<div class="empty">沒有待收的款項</div>';
+    }).join('') || `<div class="empty">${viewYear === 'all' ? '' : viewYear + ' 年'}沒有待收的款項</div>`;
     document.getElementById('rc-modal').classList.add('open');
+  }
+  // 催款訊息：帶入專案名稱（去掉前面的內部編號）與待收金額，複製後貼到 LINE
+  function reminderText(c) {
+    const name = (c.name||'').replace(/^\d{3}\s+/, '');
+    const due = amountDue(c), partial = due !== Number(c.quote_amount);
+    const d = c.end_date || c.start_date;
+    const doneLine = c.status === '已完成' && d ? `專案已於 ${+d.slice(5,7)}/${+d.slice(8,10)} 完成，` : '';
+    return [
+      '您好，',
+      '',
+      `想跟您確認「${name}」的款項。`,
+      `${doneLine}目前${partial ? '尾款' : '款項'} NT$ ${due.toLocaleString()} 尚未入帳，再麻煩協助確認付款時程。`,
+      '',
+      '謝謝！',
+    ].join('\n');
+  }
+  async function copyReminder(id) {
+    const c = cases.find(x=>x.id===id); if (!c) return;
+    const text = reminderText(c);
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+      if (!ok) { showToast('⚠ 複製失敗'); return; }
+    }
+    showToast('催款訊息已複製，可以貼到 LINE ✓');
   }
   function closeReceivables() { document.getElementById('rc-modal').classList.remove('open'); }
 
@@ -929,15 +1009,69 @@
   function yearEntries() {
     return cases
       .filter(c => c.status === '已完成' && c.payment_status === '已結清')
-      .map(c => ({ date: c.end_date || c.start_date || '', inc: Number(c.quote_amount)||0, exp: costTotal(c) }))
+      .map(c => ({ c, date: c.end_date || c.start_date || '', inc: Number(c.quote_amount)||0, exp: costTotal(c) }))
       .filter(e => e.date);
   }
   function openYearModal() {
-    const thisYear = new Date().getFullYear();
-    const years = [...new Set([thisYear, ...yearEntries().map(e => +e.date.slice(0,4))])].sort((a,b)=>b-a);
+    const thisYear = viewYear === 'all' ? new Date().getFullYear() : +viewYear;
+    const years = [...new Set([thisYear, new Date().getFullYear(), ...yearEntries().map(e => +e.date.slice(0,4))])].sort((a,b)=>b-a);
     document.getElementById('yr-year').innerHTML = years.map(y => `<option value="${y}"${y===thisYear?' selected':''}>${y}年</option>`).join('');
     renderYearStats();
     document.getElementById('yr-modal').classList.add('open');
+  }
+  // 匯出目前選的年份（Numbers 或 Excel）：一個專案一列，最後一列合計
+  // 試算表函式庫按下去才載入；載入或產生失敗（例如離線）就改下載 CSV
+  const SHEETJS = 'https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/';
+  function loadScript(src) {
+    return new Promise((resolve, reject) => {
+      const sc = document.createElement('script');
+      sc.src = src; sc.onload = resolve; sc.onerror = () => reject(new Error('load failed: ' + src));
+      document.head.appendChild(sc);
+    });
+  }
+  async function loadXLSX(needNumbers) {
+    if (!window.XLSX) await loadScript(SHEETJS + 'xlsx.full.min.js');
+    if (needNumbers && !window.XLSX_ZAHL_PAYLOAD) await loadScript(SHEETJS + 'xlsx.zahl.js'); // 產生 .numbers 需要的範本
+    if (!window.XLSX || (needNumbers && !window.XLSX_ZAHL_PAYLOAD)) throw new Error('XLSX missing');
+    return window.XLSX;
+  }
+  function downloadBlob(blob, name) {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob); a.download = name;
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+  }
+  function openYearExportMenu(anchor) {
+    showInlineDD(anchor, [{value:'numbers',cls:'',label:'Numbers'},{value:'xlsx',cls:'',label:'Excel'}], exportYear);
+  }
+  async function exportYear(kind) {
+    const year = document.getElementById('yr-year').value;
+    const entries = yearEntries().filter(e => e.date.startsWith(year)).sort((a,b) => a.date.localeCompare(b.date));
+    if (!entries.length) { showToast(`${year} 年沒有可匯出的專案`); return; }
+    const rows = [['月份','專案名稱','客戶','類別','結束日期','收入','支出','結餘']];
+    entries.forEach(e => rows.push([+e.date.slice(5,7)+'月', e.c.name, e.c.client||'', e.c.category||'', e.date, e.inc, e.exp, e.inc-e.exp]));
+    const inc = entries.reduce((s,e)=>s+e.inc,0), exp = entries.reduce((s,e)=>s+e.exp,0);
+    rows.push(['合計','','','','',inc,exp,inc-exp]);
+    const isNumbers = kind === 'numbers', label = isNumbers ? 'Numbers' : 'Excel';
+    showToast(`正在產生 ${label} 檔…`);
+    try {
+      const XLSX = await loadXLSX(isNumbers);
+      const ws = XLSX.utils.aoa_to_sheet(rows);
+      ws['!cols'] = [{wch:6},{wch:34},{wch:24},{wch:8},{wch:12},{wch:12},{wch:12},{wch:12}];
+      for (let r = 1; r < rows.length; r++) for (const col of ['F','G','H']) { const cell = ws[col+(r+1)]; if (cell) cell.z = '#,##0'; }
+      const wb = XLSX.utils.book_new();
+      XLSX.utils.book_append_sheet(wb, ws, `${year}年`);
+      const buf = isNumbers
+        ? XLSX.write(wb, { bookType:'numbers', type:'array', numbers: window.XLSX_ZAHL_PAYLOAD, compression:true })
+        : XLSX.write(wb, { bookType:'xlsx', type:'array' });
+      const mime = isNumbers ? 'application/x-iwork-numbers-sffnumbers' : 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet';
+      downloadBlob(new Blob([buf], { type: mime }), `全年收入-${year}.${isNumbers?'numbers':'xlsx'}`);
+      showToast(`已下載 ${year} 年 ${label} 檔（${entries.length} 個專案）✓`);
+    } catch (e) {
+      const cell = v => { const t = String(v ?? ''); return /[",\n]/.test(t) ? '"' + t.replace(/"/g,'""') + '"' : t; };
+      downloadBlob(new Blob(['\uFEFF' + rows.map(r => r.map(cell).join(',')).join('\r\n')], { type:'text/csv;charset=utf-8' }), `全年收入-${year}.csv`);
+      showToast(`${label} 檔產生失敗，已改下載 CSV`);
+    }
   }
   function closeYearModal() { document.getElementById('yr-modal').classList.remove('open'); }
   function renderYearStats() {
@@ -980,6 +1114,28 @@
           </div>
         </div>`;
       }).join('');
+    // 類別／客戶：各自的收入、佔全年收入的比例、專案數；客戶只列前 5 名，其餘合併
+    const group = keyOf => {
+      const map = new Map();
+      entries.forEach(e => { const k = keyOf(e.c); const g = map.get(k) || { k, inc:0, n:0 }; g.inc += e.inc; g.n++; map.set(k, g); });
+      return [...map.values()].sort((a,b) => b.inc - a.inc);
+    };
+    const section = (title, rows) => {
+      if (!rows.length) return '';
+      const top = Math.max(...rows.map(r=>r.inc), 1);
+      return `<div class="bd-title">${title}</div>` + rows.map(r => `<div class="bd-row">
+          <div class="bd-label" title="${esc(r.k).replace(/"/g,'&quot;')}"><span>${esc(r.k)}</span><small>${r.n} 案</small></div>
+          <div class="bd-bar-wrap"><div class="mc-bar mc-bar-income" style="width:${Math.round(r.inc/top*100)}%"></div></div>
+          <div class="bd-amt">$${r.inc.toLocaleString()}<small>${inc ? Math.round(r.inc/inc*100) : 0}%</small></div>
+        </div>`).join('');
+    };
+    const byCat = group(c => c.category || '其他');
+    let byClient = group(c => (c.client||'').trim() || '未填客戶');
+    if (byClient.length > 6) {
+      const rest = byClient.slice(5);
+      byClient = [...byClient.slice(0,5), { k:`其他 ${rest.length} 個客戶`, inc: rest.reduce((s,r)=>s+r.inc,0), n: rest.reduce((s,r)=>s+r.n,0) }];
+    }
+    document.getElementById('yr-breakdown').innerHTML = section('類別收入', byCat) + section('客戶收入', byClient);
     document.getElementById('yr-note').textContent = `只計入狀態「已完成」且付款「已結清」、有填日期的專案，${year} 年共 ${entries.length} 個。金額算在結束日期那個月。`;
   }
 
@@ -1065,11 +1221,17 @@
   function renderAll() {
     const q = document.getElementById('search-input').value.trim().toLowerCase();
     let list = q ? cases.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.client||'').toLowerCase().includes(q)) : [...cases];
+    const years = [...new Set([String(new Date().getFullYear()), ...cases.map(caseYear)])].sort((a,b)=>b.localeCompare(a));
+    if (viewYear !== 'all' && !years.includes(viewYear)) years.push(viewYear);
+    viewYears = years;
+    document.getElementById('year-select').textContent = (viewYear === 'all' ? '全部' : viewYear + '年') + ' ▾';
+    list = list.filter(inViewYear);
+    document.getElementById('client-list').innerHTML = [...new Set(cases.map(c=>(c.client||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n).replace(/"/g,'&quot;')}">`).join('');
     const rcN = receivables().length;
     document.getElementById('rc-count').textContent = rcN || '';
     let bar = '';
     if (missingOnly) {
-      const miss = cases.filter(isMissing);
+      const miss = cases.filter(inViewYear).filter(isMissing);
       list = list.filter(isMissing);
       bar = `<div class="filter-bar"><span>只顯示缺資料的專案：缺日期 ${miss.filter(c=>missingWhat(c).includes('缺日期')).length} 個・缺報價 ${miss.filter(c=>missingWhat(c).includes('缺報價')).length} 個</span><button onclick="missingOnly=false;renderAll()">顯示全部</button></div>`;
     }
@@ -1110,7 +1272,9 @@
           ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD;font-size:0.8rem">—</span>'}
         </div>
         <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDateRangePicker(this,'${c.id}')">${date||'<span style="color:#DDD">選擇日期</span>'}</div>
-        <div class="td td-date" style="cursor:pointer;position:relative" onclick="event.stopPropagation();document.getElementById('dl-r-${c.id}').showPicker()">${c.deadline?`<span class="${deadlineInfo(c).cls}" title="${deadlineInfo(c).note}">${fmtDate(c.deadline)}</span>`:'<span style="color:#DDD">—</span>'}<input type="date" id="dl-r-${c.id}" value="${c.deadline||''}" onchange="event.stopPropagation();updateField('${c.id}','deadline',this.value)" style="position:absolute;opacity:0;pointer-events:none;width:0;height:0;top:0;left:0"></div>
+        <div class="td">
+          <span class="badge b-pay-${payLabel(c.payment_status)||'未收款'}" onclick="event.stopPropagation();showInlineDD(this,PAY_DD_ITEMS,v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)||'未收款'}</span>
+        </div>
         <div class="td">
           <span class="badge b-pri-${pri}" onclick="event.stopPropagation();showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${pri}</span>
         </div>
@@ -1127,7 +1291,7 @@
       <div class="table-head">
         <div class="th">🗒 專案名稱</div><div class="th">✦ 狀態</div>
         <div class="th">🧾 發票</div>
-        <div class="th">📅 日期</div><div class="th">⚠ Deadline</div>
+        <div class="th">📅 日期</div><div class="th">💳 付款</div>
         <div class="th">◎ 優先級</div><div class="th" style="text-align:right;padding-right:12px">≡ 報價</div><div class="th">類別</div>
       </div>
       ${rows||'<div class="empty" style="padding:16px 0">此分類無專案</div>'}
@@ -1235,7 +1399,7 @@
         </div>
         <div class="prop-row">
           <div class="prop-label">👤 客戶</div>
-          <div class="prop-value"><input class="prop-input" placeholder="添加" value="${esc(c.client||'').replace(/"/g,'&quot;')}" onblur="savePanelField('client',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"></div>
+          <div class="prop-value"><input class="prop-input" list="client-list" autocomplete="off" placeholder="添加" value="${esc(c.client||'').replace(/"/g,'&quot;')}" onblur="savePanelField('client',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"></div>
         </div>
         <div class="prop-row">
           <div class="prop-label">💰 報價</div>
@@ -1244,6 +1408,13 @@
         <div class="prop-row">
           <div class="prop-label">💳 付款</div>
           <div class="prop-value">${c.payment_status?`<span class="badge b-pay-${payLabel(c.payment_status)}" onclick="showInlineDD(this,PAY_DD_ITEMS,v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)}</span>`:'—'}</div>
+        </div>
+        <div class="prop-row">
+          <div class="prop-label">💵 已收金額</div>
+          <div class="prop-value" style="display:flex;align-items:center;gap:10px">
+            <input class="prop-input" style="width:130px;flex-shrink:0" inputmode="numeric" placeholder="添加" value="${caseReceived(c)?'$'+caseReceived(c).toLocaleString():''}" onfocus="this.value=this.value.replace(/[$,]/g,'')" onblur="saveReceived(this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
+            <span id="due-hint" style="font-size:0.74rem;color:#AAA">${dueHintHTML(c)}</span>
+          </div>
         </div>
       </div>
 
@@ -1429,12 +1600,9 @@
       document.getElementById('m-deadline').value=c.deadline||'';
       document.getElementById('m-quote').value=c.quote_amount||'';
       document.getElementById('m-pay-status').value=payLabel(c.payment_status)||'未收款';
-      document.getElementById('m-contact-name').value=c.contact_name||'';
-      document.getElementById('m-contact-info').value=c.contact_info||'';
-      document.getElementById('m-note').value=c.note||'';
     } else {
       document.getElementById('modal-ttl').textContent='新增專案';
-      ['m-name','m-client','m-contact-name','m-contact-info','m-note'].forEach(x=>document.getElementById(x).value='');
+      ['m-name','m-client'].forEach(x=>document.getElementById(x).value='');
       document.getElementById('m-category').value='藝術';
       document.getElementById('m-status').value='接洽中';
       document.getElementById('m-priority').value='中';
@@ -1459,14 +1627,13 @@
       deadline:document.getElementById('m-deadline').value,
       quote_amount:parseFloat(document.getElementById('m-quote').value)||0,
       payment_status:document.getElementById('m-pay-status').value,
-      contact_name:document.getElementById('m-contact-name').value.trim(),
-      contact_info:document.getElementById('m-contact-info').value.trim(),
-      note:document.getElementById('m-note').value.trim(),
     };
     const isNew=!editingId;
-    if(isNew){data.id=Date.now().toString();data.created_at=new Date().toISOString();data.progress_note='';data.tasks='[]';cases.unshift(data);}
+    if(isNew){data.contact_name='';data.contact_info='';data.note='';data.id=Date.now().toString();data.created_at=new Date().toISOString();data.progress_note='';data.tasks='[]';cases.unshift(data);}
     else{const i=cases.findIndex(c=>c.id===editingId);if(i!==-1)cases[i]={...cases[i],...data};}
     const savedId=editingId||data.id;
+    const savedCase = cases.find(c=>c.id===savedId);
+    if (savedCase && !inViewYear(savedCase)) viewYear = caseYear(savedCase);
     saveLocal();renderAll();closeModal();showToast(isNew?'已新增 ✓':'已更新 ✓');
     if(viewingId===savedId)renderPanel();
     if(db){setSyncDot('loading');try{const{error}=isNew?await db.from('cases').insert(data):await db.from('cases').update(data).eq('id',savedId);if(error){setSyncDot('err');showToast('⚠ 雲端同步失敗：'+error.message);}else{setSyncDot('ok');}}catch(e){setSyncDot('err');showToast('⚠ 雲端連線錯誤：'+e.message);}}
