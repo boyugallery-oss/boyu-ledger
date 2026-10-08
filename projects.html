@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <!-- 版本三・2026-10-08 -->
+  <!-- 版本四・2026-10-08 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>📁 Boyu 專案管理</title>
@@ -343,6 +343,47 @@
     .gcal-btn { background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; display: inline-flex; align-items: center; opacity: 0.55; transition: opacity 0.15s; flex-shrink: 0; }
     .gcal-btn:hover { opacity: 1; background: #E8F0FE; }
     #cl-modal { z-index: 610; }
+    /* 報價單檔案視窗 */
+    .qt-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: #4CAF50; margin-left: 6px; vertical-align: middle; }
+    .qt-drop { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 44px 16px; border: 1.5px dashed #D8D7D2; border-radius: 14px; cursor: pointer; text-align: center; }
+    .qt-drop:hover { background: #FAFAF8; }
+    #qt-modal.dragging .modal-sheet { outline: 2px dashed #4CAF50; outline-offset: -8px; }
+    #qt-modal.dragging .qt-drop { background: #F1F8F1; border-color: #4CAF50; }
+    .qt-drop b { font-size: 0.9rem; font-weight: 600; }
+    .qt-drop span { font-size: 0.74rem; color: #AAA; }
+    .qt-empty { padding: 40px 16px; text-align: center; color: #AAA; font-size: 0.82rem; }
+    .qt-note { background: #FDECEA; color: #C62828; font-size: 0.78rem; padding: 9px 12px; border-radius: 10px; margin-bottom: 12px; }
+    .qt-info { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; font-size: 0.8rem; }
+    .qt-info span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .qt-info small { color: #AAA; font-size: 0.7rem; white-space: nowrap; }
+    .qt-frame { width: 100%; height: min(64vh, 720px); border: 1px solid #E6E5E0; border-radius: 10px; background: #F7F6F3; }
+    .qt-view { position: relative; overflow: hidden; width: 100%; aspect-ratio: 1 / 1.414; max-height: 62vh; background: #ECEBE6; border: 1px solid #E6E5E0; border-radius: 10px; touch-action: none; user-select: none; -webkit-user-select: none; cursor: zoom-in; }
+    .qt-view.zoomed { cursor: grab; }
+    .qt-view.zoomed:active { cursor: grabbing; }
+    .qt-stage { position: absolute; top: 0; left: 0; width: 100%; transform-origin: 0 0; will-change: transform; }
+    .qt-stage canvas, .qt-stage img { display: block; width: 100%; height: auto; background: white; pointer-events: none; }
+    .qt-stage canvas + canvas { margin-top: 6px; }
+    .qt-more { padding: 14px; text-align: center; font-size: 0.72rem; color: #888; }
+    .qt-loading { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; color: #AAA; font-size: 0.82rem; }
+    .qt-tip { font-size: 0.68rem; color: #BBB; text-align: center; margin-top: 6px; }
+    .qt-full-x { display: none; position: absolute; top: max(12px, env(safe-area-inset-top)); right: 12px; width: 40px; height: 40px; border-radius: 50%; border: none; background: rgba(0,0,0,0.55); color: white; font-size: 1.05rem; cursor: pointer; z-index: 2; }
+    .qt-view.full { position: fixed; inset: 0; z-index: 900; width: auto; max-height: none; aspect-ratio: auto; border: none; border-radius: 0; background: #1A1A1A; }
+    .qt-view.full { height: auto !important; }
+    .qt-view.full .qt-full-x { display: block; }
+    .qt-actions { display: flex; gap: 8px; margin-top: 12px; flex-wrap: wrap; }
+    .qt-inline { cursor: pointer; display: inline-flex; }
+    .qt-btn { display: inline-block; background: white; border: 1.5px solid #E5E5E2; border-radius: 8px; padding: 7px 14px; font-size: 0.78rem; color: #444; font-family: inherit; cursor: pointer; text-decoration: none; }
+    .qt-btn:hover { background: #F5F5F3; }
+    .qt-del { color: #C62828; margin-left: auto; }
+    /* 電腦版：視窗盡量用滿螢幕高度，預覽區是直式 A4 的比例（寬:高 = 1:1.414），整頁一次看完不用捲 */
+    @media (min-width: 601px) {
+      #qt-modal { --qt-h: calc(100vh - 24px - 218px); }
+      #qt-modal .modal-sheet { width: auto; max-width: calc(100vw - 32px); max-height: calc(100vh - 24px); }
+      #qt-body { width: max(calc(var(--qt-h) / 1.414), 420px); max-width: 100%; }
+      .qt-frame { height: var(--qt-h); }
+      .qt-view { height: var(--qt-h); max-height: none; aspect-ratio: auto; }
+      .qt-drop { min-height: calc(var(--qt-h) * 0.7); justify-content: center; }
+    }
     .cl-link { flex-shrink: 0; background: none; border: none; cursor: pointer; font-family: inherit; font-size: 0.74rem; color: #AAA; padding: 3px 6px; border-radius: 5px; white-space: nowrap; }
     .cl-link:hover { color: #1C1C1C; background: #F7F6F3; }
     .cl-info { font-size: 0.78rem; color: #444; line-height: 1.75; }
@@ -643,6 +684,13 @@
     </div>
     <div class="fg" style="margin-top:10px"><span class="fl">發票寄送地址</span><input type="text" id="iv-address"></div>
     <button class="btn-p" onclick="saveInvoiceInfo()">儲存</button>
+  </div>
+</div>
+
+<div class="modal-overlay" id="qt-modal" onclick="if(event.target===this)closeQuoteModal()">
+  <div class="modal-sheet">
+    <div class="modal-hd"><div class="modal-ttl">報價單</div><button class="btn-x" onclick="closeQuoteModal()">✕</button></div>
+    <div id="qt-body"></div>
   </div>
 </div>
 
@@ -1161,7 +1209,7 @@
   async function duplicateCase(id) {
     const src = cases.find(x=>x.id===id); if (!src) return;
     const now = Date.now();
-    const items = parseTasks(src.tasks).filter(t => t.type !== 'payment').map((t,i) =>
+    const items = parseTasks(src.tasks).filter(t => t.type !== 'payment' && t.type !== 'quote').map((t,i) =>
       t.type ? { ...t, ...(t.id ? { id: String(now+i+1) } : {}), ...(t.type === 'meta' ? { lost: '' } : {}) }
              : { ...t, id: String(now+i+1), status: '未開始', date: '', note: '' });
     const data = {
@@ -1497,41 +1545,251 @@
       '謝謝！',
     ].join('\n');
   }
-  async function copyText(text, okMsg) {
-    try { await navigator.clipboard.writeText(text); }
-    catch (e) {
-      const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
-      document.body.appendChild(ta); ta.select();
-      let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
-      ta.remove();
-      if (!ok) { showToast('⚠ 複製失敗'); return; }
-    }
-    showToast(okMsg);
+  // ── 報價單檔案：一個專案放一份 PDF 或圖片，存在 Supabase Storage 的 quotes 空間（要登入才能讀寫）。
+  // 專案這邊只在 tasks 裡記一筆 { type:'quote', path, name, mime, size, at }，檔案本身不進資料表 ──
+  const QUOTE_BUCKET = 'quotes', QUOTE_MAX_MB = 10;
+  function caseQuoteFile(c) { return parseTasks(c.tasks).find(t=>t.type==='quote') || null; }
+  function writeQuoteFile(c, rec) {
+    const all = parseTasks(c.tasks).filter(t=>t.type!=='quote');
+    c.tasks = JSON.stringify(rec ? [...all, rec] : all);
+    syncTasks(c); renderAll(); if (viewingId === c.id) renderPanel();
   }
-  // 報價單文字：專案名稱（去掉內部編號）、客戶、時程、項目清單、未稅／稅額／含稅、頭款與尾款，複製後貼到 LINE
-  function quoteSheetText(c) {
-    const name = (c.name||'').trim().replace(/^\d+(?:\s*-\s*\d+)?\s+/, '');
-    const gross = Number(c.quote_amount) || 0, net = Math.round(gross / (1 + TAX_RATE));
-    const items = parseTasks(c.tasks).filter(t => !t.type && (t.name||'').trim());
-    const day = d => `${+d.slice(0,4)}/${+d.slice(5,7)}/${+d.slice(8,10)}`, nt = n => 'NT$ ' + n.toLocaleString();
-    const lines = ['【報價單】', '', `專案：${name}`];
-    if ((c.client||'').trim()) lines.push(`客戶：${c.client.trim()}`);
-    if (c.start_date) lines.push(`時程：${day(c.start_date)}${c.end_date && c.end_date !== c.start_date ? ' – ' + day(c.end_date) : ''}`);
-    if (items.length) lines.push('', '項目：', ...items.map((t,i) => `${i+1}. ${t.name.trim()}`));
-    if (gross) {
-      lines.push('', `金額（未稅）：${nt(net)}`, `營業稅 5%：${nt(gross - net)}`, `總計（含稅）：${nt(gross)}`);
-      if (c.payment_status !== '互惠') {
-        const dep = Math.min(caseReceived(c) || Math.round(gross * DEPOSIT_RATE), gross);
-        lines.push('', '付款方式：', `頭款 ${nt(dep)}`, `尾款 ${nt(gross - dep)}`);
-      }
-    }
-    lines.push('', '以上內容再麻煩確認，謝謝！');
-    return lines.join('\n');
-  }
-  function copyQuoteSheet() {
+  // 拖曳上傳：報價單視窗開著時，把檔案拖到畫面上任何位置放開都可以（已經有一份的話就是換一份）
+  (() => {
+    const ov = document.getElementById('qt-modal');
+    let depth = 0;
+    const hasFile = e => [...(e.dataTransfer?.types || [])].includes('Files');
+    ov.addEventListener('dragenter', e => { if (!hasFile(e)) return; e.preventDefault(); depth++; ov.classList.add('dragging'); });
+    ov.addEventListener('dragover', e => { if (!hasFile(e)) return; e.preventDefault(); e.dataTransfer.dropEffect = 'copy'; });
+    ov.addEventListener('dragleave', e => { if (!hasFile(e)) return; if (--depth <= 0) { depth = 0; ov.classList.remove('dragging'); } });
+    ov.addEventListener('drop', e => {
+      if (!hasFile(e)) return;
+      e.preventDefault(); depth = 0; ov.classList.remove('dragging');
+      if (!db || !session) return;
+      if (e.dataTransfer.files.length > 1) { renderQuoteModal('一次只能放一份，請只拖一個檔案。'); return; }
+      uploadQuoteFile(e.dataTransfer.files[0]);
+    });
+  })();
+  function closeQuoteModal() { exitQuoteFull(); document.getElementById('qt-modal').classList.remove('open'); document.getElementById('qt-body').innerHTML = ''; }
+  async function openQuoteModal() {
     const c = cases.find(x=>x.id===viewingId); if (!c) return;
-    if (!Number(c.quote_amount)) { showToast('還沒填報價，先填報價再複製'); return; }
-    copyText(quoteSheetText(c), '報價單文字已複製，可以貼到 LINE ✓');
+    document.getElementById('qt-modal').classList.add('open');
+    await renderQuoteModal();
+  }
+  async function renderQuoteModal(note = '') {
+    const c = cases.find(x=>x.id===viewingId); if (!c) return;
+    const body = document.getElementById('qt-body'), f = caseQuoteFile(c);
+    const picker = label => `<label class="qt-drop"><input type="file" accept="application/pdf,image/jpeg,image/png" style="display:none" onchange="uploadQuoteFile(this.files[0])">${label}</label>`;
+    const warn = note ? `<div class="qt-note">${esc(note)}</div>` : '';
+    if (!db || !session) { body.innerHTML = `<div class="qt-empty">要先登入才能上傳或查看報價單。</div>`; return; }
+    if (!f) { body.innerHTML = warn + picker('<b>把檔案拖到這裡，或點一下選擇</b><span>PDF 或 JPG，一個專案放一份</span>'); return; }
+    body.innerHTML = `<div class="qt-empty">讀取中…</div>`;
+    let url = '';
+    const warm = warmQuote(c);
+    url = warm ? await warm.url : '';
+    const kb = f.size ? (f.size > 1048576 ? (f.size/1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(f.size/1024)) + ' KB') : '';
+    const info = `<div class="qt-info"><span>${esc(f.name||'報價單')}</span><small>${[kb, (f.at||'').slice(0,10)].filter(Boolean).join('・')}</small></div>`;
+    const touch = window.innerWidth <= 640;
+    const view = !url ? `<div class="qt-empty">找不到這份檔案，可能已經被刪除。可以重新上傳一份。</div>`
+      : `<div class="qt-view" id="qt-view"><div class="qt-stage" id="qt-stage"></div><div class="qt-loading" id="qt-loading">讀取中…</div><button class="qt-full-x" onclick="exitQuoteFull()">✕</button></div>
+         <div class="qt-tip">${touch ? '點一下放大檢視，雙指可以縮放' : '滾輪放大縮小・按住拖曳移動・點兩下還原'}</div>`;
+    body.innerHTML = warn + info + view + `<div class="qt-actions">
+        ${url ? `<a class="qt-btn" href="${url}" target="_blank" rel="noopener">另開視窗</a>` : ''}
+        ${picker('<span class="qt-btn">換一份</span>').replace('class="qt-drop"','class="qt-inline"')}
+        <button class="qt-btn qt-del" onclick="deleteQuoteFile()">刪除</button>
+      </div>`;
+    if (url) showQuoteFile(url, f.mime, warm);
+  }
+  // PDF 用 pdf.js 一頁一頁畫成圖（Safari、Chrome 看起來才會一樣，也才能自己控制縮放）；元件按下去才載入，載入失敗就退回瀏覽器內建的顯示
+  const PDFJS = 'https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/';
+  // 預先準備：一打開有報價單的專案，就在背景先拿好檔案網址、載入顯示元件、把 PDF 抓下來，
+  // 等你按「報價單」時通常已經準備好了。網址有效 1 小時，這裡留 50 分鐘內的重複使用
+  const quoteCache = new Map();
+  async function loadPdfJs() {
+    if (!window.pdfjsLib) { await loadScript(PDFJS + 'build/pdf.min.js'); window.pdfjsLib.GlobalWorkerOptions.workerSrc = PDFJS + 'build/pdf.worker.min.js'; }
+    return window.pdfjsLib;
+  }
+  function warmQuote(c) {
+    const f = c && caseQuoteFile(c); if (!f || !db || !session) return null;
+    let e = quoteCache.get(f.path);
+    if (e && Date.now() - e.at < 50 * 60000) return e;
+    e = { at: Date.now() };
+    e.url = (async () => {
+      let url = '';
+      try { const { data, error } = await db.storage.from(QUOTE_BUCKET).createSignedUrl(f.path, 3600); if (!error) url = data.signedUrl; } catch (_) {}
+      if (!url) quoteCache.delete(f.path);
+      return url;
+    })();
+    if (f.mime === 'application/pdf') {
+      e.pdf = (async () => {
+        const [url, lib] = await Promise.all([e.url, loadPdfJs()]);
+        if (!url) throw new Error('no url');
+        return lib.getDocument({ url, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
+      })();
+      e.pdf.catch(() => quoteCache.delete(f.path));
+    } else e.url.then(u => { if (u) new Image().src = u; });
+    quoteCache.set(f.path, e);
+    return e;
+  }
+  async function showQuoteFile(url, mime, warm) {
+    const view = document.getElementById('qt-view'), stage = document.getElementById('qt-stage'), loading = document.getElementById('qt-loading');
+    const done = () => { if (loading.isConnected) loading.remove(); makeZoomer(view, stage); };
+    if (mime !== 'application/pdf') {
+      const img = new Image(); img.alt = '報價單'; img.draggable = false;
+      img.onload = done; img.onerror = () => { loading.textContent = '圖片讀不出來'; };
+      img.src = url; stage.appendChild(img); return;
+    }
+    try {
+      const pdf = warm && warm.pdf ? await warm.pdf : await (await loadPdfJs()).getDocument({ url, cMapUrl: PDFJS + 'cmaps/', cMapPacked: true }).promise;
+      const small = window.innerWidth <= 640, pages = Math.min(pdf.numPages, small ? 5 : 20); // 手機記憶體有限，少畫幾頁
+      // 先用「剛好等於螢幕解析度」的大小畫，最快出現畫面；放大時 _sharpen 會再重畫成高解析度
+      const targetW = Math.min(small ? 1600 : 2200, Math.round(view.clientWidth * (window.devicePixelRatio || 1) * 1.25));
+      const drawPage = async (page, w) => {
+        const vp = page.getViewport({ scale: w / page.getViewport({ scale: 1 }).width });
+        const cv = document.createElement('canvas'); cv.width = Math.round(vp.width); cv.height = Math.round(vp.height);
+        await page.render({ canvasContext: cv.getContext('2d'), viewport: vp }).promise;
+        return cv;
+      };
+      const drawn = [];
+      // 放大之後，畫面上看得到的那幾頁用對應的解析度重畫一次，字才不會糊（上限：電腦寬 4200、手機寬 2600）
+      let job = 0;
+      view._sharpen = async scale => {
+        const mine = ++job, want = Math.min(small ? 2600 : 4200, Math.round(view.clientWidth * (window.devicePixelRatio || 1) * scale));
+        const box = view.getBoundingClientRect();
+        for (const d of drawn) {
+          if (mine !== job || !view.isConnected) return;
+          const r = d.cv.getBoundingClientRect();
+          if (r.bottom < box.top || r.top > box.bottom || want <= d.cv.width * 1.15) continue;
+          const cv = await drawPage(d.page, want);
+          if (mine !== job || !d.cv.isConnected) return;
+          d.cv.replaceWith(cv); d.cv = cv;
+        }
+      };
+      for (let i = 1; i <= pages; i++) {
+        if (!view.isConnected) return; // 視窗已經關掉或換了一份
+        const page = await pdf.getPage(i), cv = await drawPage(page, targetW);
+        stage.appendChild(cv); drawn.push({ page, cv });
+        if (i === 1) done();
+      }
+      if (pdf.numPages > pages) { const more = document.createElement('div'); more.className = 'qt-more'; more.textContent = `共 ${pdf.numPages} 頁，這裡只顯示前 ${pages} 頁，其餘請按「另開視窗」`; stage.appendChild(more); }
+    } catch (e) {
+      if (!view.isConnected) return;
+      const fr = document.createElement('iframe'); fr.className = 'qt-frame'; fr.src = url + '#toolbar=0&navpanes=0&view=Fit';
+      view.replaceWith(fr); document.querySelector('#qt-body .qt-tip')?.remove();
+    }
+  }
+  // 縮放檢視：內容寬度先貼齊框寬（倍率 1），可放大到 6 倍。
+  // 電腦：滾輪以游標為中心縮放、按住拖曳、點兩下在 1 倍和 2.5 倍之間切換。手機：點一下變全螢幕，雙指縮放、單指拖曳、點兩下切換
+  function makeZoomer(view, stage) {
+    if (view._zoomer) { view._zoomer(); return; }
+    let s = 1, x = 0, y = 0, start = null, moved = false, downAt = 0, lastTap = 0, sharpT = 0;
+    const pts = new Map();
+    const apply = () => {
+      const vw = view.clientWidth, vh = view.clientHeight, cw = stage.offsetWidth * s, ch = stage.offsetHeight * s;
+      x = cw <= vw ? (vw - cw) / 2 : Math.min(0, Math.max(vw - cw, x));
+      y = ch <= vh ? (vh - ch) / 2 : Math.min(0, Math.max(vh - ch, y));
+      stage.style.transform = `translate(${x}px,${y}px) scale(${s})`;
+      view.classList.toggle('zoomed', s > 1.01);
+      clearTimeout(sharpT); sharpT = setTimeout(() => view._sharpen && view._sharpen(s), 220);
+    };
+    const zoomAt = (px, py, ns) => { ns = Math.min(6, Math.max(1, ns)); const k = ns / s; x = px - (px - x) * k; y = py - (py - y) * k; s = ns; apply(); };
+    const rel = e => { const r = view.getBoundingClientRect(); return [e.clientX - r.left, e.clientY - r.top]; };
+    const snap = () => { const p = [...pts.values()]; start = { s, x, y, p: p.map(q => [...q]), d: p.length > 1 ? Math.hypot(p[0][0]-p[1][0], p[0][1]-p[1][1]) : 0 }; };
+    view._zoomer = () => { s = 1; x = 0; y = 0; apply(); };
+    view.addEventListener('wheel', e => { e.preventDefault(); const [px, py] = rel(e); zoomAt(px, py, s * Math.exp(-e.deltaY * (e.ctrlKey ? 0.01 : 0.002))); }, { passive: false });
+    view.addEventListener('pointerdown', e => {
+      if (e.target.closest('.qt-full-x')) return;
+      try { view.setPointerCapture(e.pointerId); } catch (_) {}
+      pts.set(e.pointerId, rel(e)); if (pts.size === 1) { moved = false; downAt = Date.now(); } snap();
+    });
+    view.addEventListener('pointermove', e => {
+      if (!pts.has(e.pointerId) || !start) return;
+      pts.set(e.pointerId, rel(e));
+      const p = [...pts.values()];
+      if (p.length === 1) {
+        const dx = p[0][0] - start.p[0][0], dy = p[0][1] - start.p[0][1];
+        if (Math.abs(dx) + Math.abs(dy) > 6) moved = true;
+        x = start.x + dx; y = start.y + dy; apply();
+      } else if (start.d) {
+        moved = true;
+        const d = Math.hypot(p[0][0]-p[1][0], p[0][1]-p[1][1]), m = [(p[0][0]+p[1][0])/2, (p[0][1]+p[1][1])/2];
+        const m0 = [(start.p[0][0]+start.p[1][0])/2, (start.p[0][1]+start.p[1][1])/2];
+        const ns = Math.min(6, Math.max(1, start.s * d / start.d)), cx = (m0[0] - start.x) / start.s, cy = (m0[1] - start.y) / start.s;
+        s = ns; x = m[0] - cx * ns; y = m[1] - cy * ns; apply();
+      }
+    });
+    const up = e => {
+      if (!pts.has(e.pointerId)) return;
+      const at = pts.get(e.pointerId); pts.delete(e.pointerId);
+      if (pts.size) { snap(); return; }
+      if (moved || Date.now() - downAt > 350) return;
+      const now = Date.now();
+      if (now - lastTap < 320) { lastTap = 0; zoomAt(at[0], at[1], s > 1.01 ? 1 : 2.5); return; }
+      lastTap = now;
+      if (window.innerWidth <= 640 && !view.classList.contains('full')) enterQuoteFull();
+    };
+    view.addEventListener('pointerup', up); view.addEventListener('pointercancel', up);
+    window.addEventListener('resize', () => { if (view.isConnected) apply(); });
+    apply();
+  }
+  // 手機全螢幕檢視：把檢視區搬到最上層蓋滿畫面，關掉再放回原位
+  let _qtHome = null;
+  function enterQuoteFull() {
+    const view = document.getElementById('qt-view'); if (!view || view.classList.contains('full')) return;
+    _qtHome = { parent: view.parentNode, next: view.nextSibling };
+    document.body.appendChild(view); view.classList.add('full'); view._zoomer && view._zoomer();
+  }
+  function exitQuoteFull() {
+    const view = document.getElementById('qt-view'); if (!view || !_qtHome) return;
+    view.classList.remove('full');
+    if (_qtHome.parent.isConnected) _qtHome.parent.insertBefore(view, _qtHome.next && _qtHome.next.parentNode === _qtHome.parent ? _qtHome.next : null); else view.remove();
+    _qtHome = null; view._zoomer && view._zoomer();
+  }
+  // 照片 2 MB 以內原樣上傳；超過才縮到長邊 3600 以內（A4 掃描 300dpi 的大小）存成高畫質 JPG，放大看字才清楚。PDF 一律原樣上傳
+  function shrinkImage(file) {
+    if (file.size <= 2 * 1048576) return Promise.resolve(file);
+    return new Promise(resolve => {
+      const img = new Image(), u = URL.createObjectURL(file);
+      img.onload = () => {
+        const k = Math.min(1, 3600 / Math.max(img.width, img.height)), cv = document.createElement('canvas');
+        cv.width = Math.round(img.width * k); cv.height = Math.round(img.height * k);
+        const g = cv.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height); g.drawImage(img, 0, 0, cv.width, cv.height);
+        URL.revokeObjectURL(u);
+        cv.toBlob(b => resolve(b && b.size < file.size ? b : file), 'image/jpeg', 0.92);
+      };
+      img.onerror = () => { URL.revokeObjectURL(u); resolve(file); };
+      img.src = u;
+    });
+  }
+  async function uploadQuoteFile(file) {
+    const c = cases.find(x=>x.id===viewingId); if (!c || !file) return;
+    const isPdf = file.type === 'application/pdf', isImg = file.type === 'image/jpeg' || file.type === 'image/png';
+    if (!isPdf && !isImg) { renderQuoteModal('只能上傳 PDF 或 JPG 檔。'); return; }
+    if (file.size > QUOTE_MAX_MB * 1048576 && isPdf) { renderQuoteModal(`檔案超過 ${QUOTE_MAX_MB} MB，請先壓縮再上傳。`); return; }
+    document.getElementById('qt-body').innerHTML = `<div class="qt-empty">上傳中…</div>`;
+    const blob = isImg ? await shrinkImage(file) : file;
+    const mime = isPdf ? 'application/pdf' : (blob === file ? file.type : 'image/jpeg');
+    const path = `${c.id}/${Date.now()}.${isPdf ? 'pdf' : mime === 'image/png' ? 'png' : 'jpg'}`;
+    const old = caseQuoteFile(c);
+    let error;
+    try { ({ error } = await db.storage.from(QUOTE_BUCKET).upload(path, blob, { contentType: mime, upsert: false })); } catch (e) { error = e; }
+    if (error) {
+      const msg = /bucket.*not.*found/i.test(error.message||'') ? '檔案空間還沒建立，請先到 Supabase 執行設定。' : '上傳失敗：' + (error.message || '請確認網路後再試一次');
+      renderQuoteModal(msg); return;
+    }
+    writeQuoteFile(c, { type:'quote', path, name: file.name, mime, size: blob.size, at: new Date().toISOString() });
+    if (old && old.path !== path) { quoteCache.delete(old.path); try { await db.storage.from(QUOTE_BUCKET).remove([old.path]); } catch (e) {} }
+    showToast('報價單已上傳 ✓');
+    renderQuoteModal();
+  }
+  async function deleteQuoteFile() {
+    const c = cases.find(x=>x.id===viewingId), f = c && caseQuoteFile(c); if (!f) return;
+    if (!confirm('確定刪除這份報價單？刪掉後救不回來。')) return;
+    quoteCache.delete(f.path);
+    try { await db.storage.from(QUOTE_BUCKET).remove([f.path]); } catch (e) {}
+    writeQuoteFile(c, null);
+    showToast('報價單已刪除');
+    renderQuoteModal();
   }
   async function copyReminder(id) {
     const c = cases.find(x=>x.id===id); if (!c) return;
@@ -2036,6 +2294,7 @@
   // ── Panel ─────────────────────────────────
   function openPanel(id) {
     if (viewingId === id) { closePanel(); return; }
+    warmQuote(cases.find(x=>x.id===id));
     viewingId = id; renderAll(); renderPanel();
     document.getElementById('app-wrap').classList.add('open');
   }
@@ -2091,7 +2350,7 @@
     document.getElementById('panel-scroll').innerHTML = `
       <div class="panel-top">
         <button class="panel-close-btn" onclick="closePanel()">← 收起</button>
-        <div style="display:flex;gap:6px"><button class="panel-edit-btn" onclick="copyQuoteSheet()" title="複製報價單文字，貼到 LINE">報價單</button><button class="panel-edit-btn" onclick="openInvoiceModal()">✎ 發票資訊</button></div>
+        <div style="display:flex;gap:6px"><button class="panel-edit-btn" onclick="openQuoteModal()" title="${caseQuoteFile(c) ? '查看報價單' : '上傳報價單'}">報價單${caseQuoteFile(c) ? '<span class="qt-dot"></span>' : ''}</button><button class="panel-edit-btn" onclick="openInvoiceModal()">✎ 發票資訊</button></div>
       </div>
       <div class="panel-title" contenteditable="true" spellcheck="false" onblur="savePanelTitle(this)" onkeydown="if(event.key==='Enter'&&!event.isComposing){event.preventDefault();this.blur()}">${esc(c.name)}</div>
       <div class="panel-sub">
