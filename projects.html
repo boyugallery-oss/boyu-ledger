@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <!-- 版本五・2026-10-09 -->
+  <!-- 版本六・2026-10-15 -->
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>📁 Boyu 專案管理</title>
@@ -714,6 +714,108 @@
       .calv-day { padding: 0 3px; }
     }
   </style>
+  <style id="audit-css">
+    /* ── 年度稽核：逐案檢討表（新視窗列印也用這一段，所以 class 都用 ad- 開頭、不依賴其他樣式） ── */
+    #ad-modal .modal-sheet { max-width: 1180px; }
+    @media (min-width: 641px) { #ad-modal .modal-sheet { max-width: min(1180px, calc(100vw - 48px)); } }
+    #ad-modal .modal-ttl { font-size: 1.05rem; font-weight: 700; }
+    .ad-tools { display: flex; align-items: center; gap: 6px; }
+    .ad-export { background: #1C1C1C !important; color: white !important; border-color: #1C1C1C !important; }
+    .ad-tools select { width: auto; padding: 5px 8px; font-size: 0.78rem; border-radius: 8px; border: 1.5px solid #E8E8E4; background: white; font-family: inherit; }
+    .ad-hero { display: grid; grid-template-columns: 150px 1fr; gap: 14px; margin-bottom: 14px; }
+    .ad-grade { border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 14px 8px; background: #F7F6F3; }
+    .ad-grade b { font-size: 2.6rem; line-height: 1; font-weight: 800; }
+    .ad-grade span { font-size: 0.74rem; color: #888; margin-top: 6px; }
+    .ad-grade.g-A b { color: #2E7D32; } .ad-grade.g-B b { color: #558B2F; } .ad-grade.g-C b { color: #E67E00; } .ad-grade.g-D b { color: #C62828; }
+    .ad-kpis { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .ad-kpi { background: #F7F6F3; border-radius: 14px; padding: 12px 14px; }
+    .ad-kpi-l { font-size: 0.72rem; color: #999; }
+    .ad-kpi-v { font-size: 1.25rem; font-weight: 700; margin-top: 4px; white-space: nowrap; }
+    .ad-kpi-s { font-size: 0.66rem; color: #AAA; margin-top: 3px; }
+    .ad-sec { border: 1px solid #EEEDE8; border-radius: 16px; padding: 16px 18px; margin-top: 14px; }
+    .ad-sec-t { font-size: 1.02rem; font-weight: 700; margin: 0 0 4px; }
+    .ad-sec-d { font-size: 0.7rem; color: #AAA; margin-bottom: 12px; line-height: 1.5; }
+    .ad-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+    .ad-m { border-radius: 12px; padding: 11px 12px; background: #FAFAF8; border-left: 4px solid #DDD; }
+    .ad-m.good { border-left-color: #4CAF50; } .ad-m.warn { border-left-color: #F0A030; } .ad-m.bad { border-left-color: #E53935; }
+    .ad-m-top { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+    .ad-m-l { font-size: 0.74rem; color: #666; }
+    .ad-m-v { font-size: 1.15rem; font-weight: 700; margin: 4px 0 2px; }
+    .ad-m-s { font-size: 0.64rem; color: #AAA; line-height: 1.45; }
+    .ad-light { font-size: 0.62rem; font-weight: 700; padding: 1px 7px; border-radius: 9px; white-space: nowrap; background: #EEE; color: #888; }
+    .ad-light.good { background: #E3F4E5; color: #2E7D32; } .ad-light.warn { background: #FFF1DC; color: #B86200; } .ad-light.bad { background: #FDE4E4; color: #C62828; }
+    .ad-scroll { overflow-x: auto; margin: 0 -4px; padding: 0 4px; }
+    .ad-table { width: 100%; border-collapse: collapse; font-size: 0.76rem; }
+    .ad-table th { font-weight: 500; color: #AAA; font-size: 0.66rem; text-align: right; padding: 0 8px 7px; white-space: nowrap; border-bottom: 1px solid #EEE; }
+    .ad-table td { padding: 8px; border-top: 1px solid #F3F3F0; text-align: right; white-space: nowrap; vertical-align: middle; }
+    .ad-table th.l, .ad-table td.l { text-align: left; }
+    .ad-table td.ad-name { white-space: normal; min-width: 170px; max-width: 260px; }
+    .ad-table td.ad-name b { font-weight: 600; display: block; }
+    .ad-table td.ad-name small { color: #AAA; font-size: 0.66rem; }
+    .ad-table tr.ad-row { cursor: pointer; }
+    .ad-table tr.ad-row:hover td { background: #FAFAF7; }
+    .ad-table tr.ad-cat td { background: #F7F6F3; font-weight: 700; font-size: 0.8rem; border-top: none; }
+    .ad-table tr.ad-cat td small { font-weight: 500; color: #999; font-size: 0.68rem; margin-left: 6px; }
+    .ad-table tr.ad-sub td { font-weight: 600; color: #555; border-top: 1px solid #E6E6E2; background: #FCFCFA; }
+    .ad-table .ad-est { color: #BBB; }
+    .ad-table .pos { color: #2E7D32; font-weight: 600; } .ad-table .neg { color: #C62828; font-weight: 600; } .ad-table .mid { color: #E67E00; font-weight: 600; }
+    .ad-st { display: inline-block; font-size: 0.64rem; padding: 2px 7px; border-radius: 9px; background: #F0F0EC; color: #666; }
+    .ad-st.s-已完成 { background: #E3F4E5; color: #2E7D32; } .ad-st.s-進行中 { background: #FBF3CF; color: #8A6D00; }
+    .ad-st.s-接洽中 { background: #FFF0E0; color: #C15000; } .ad-st.s-暫停 { background: #EEE7FB; color: #6A4BB0; } .ad-st.s-終止 { background: #EEE; color: #999; }
+    .ad-g { display: inline-block; width: 24px; height: 24px; line-height: 24px; text-align: center; border-radius: 7px; font-weight: 800; font-size: 0.8rem; }
+    .ad-g.g-A { background: #E3F4E5; color: #2E7D32; } .ad-g.g-B { background: #EEF6E0; color: #558B2F; } .ad-g.g-C { background: #FFF1DC; color: #B86200; } .ad-g.g-D { background: #FDE4E4; color: #C62828; }
+    .ad-tags { display: flex; flex-wrap: wrap; gap: 4px; white-space: normal; min-width: 150px; }
+    .ad-tag { font-size: 0.62rem; padding: 2px 7px; border-radius: 9px; background: #F0F0EC; color: #888; white-space: nowrap; }
+    .ad-tag.warn { background: #FFF1DC; color: #B86200; } .ad-tag.good { background: #E3F4E5; color: #2E7D32; }
+    .ad-memo { font-size: 0.66rem; color: #777; margin-top: 3px; line-height: 1.5; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; white-space: pre-line; }
+    .ad-memo.full { display: block; -webkit-line-clamp: unset; } .ad-tag.bad { background: #FDE4E4; color: #C62828; } .ad-tag.lost { background: #EEE; color: #777; }
+    .ad-note { border: 1px solid transparent !important; background: transparent !important; padding: 4px 6px !important; font-size: 0.72rem !important; min-width: 150px; border-radius: 6px !important; }
+    .ad-note:hover { border-color: #E5E5E5 !important; }
+    .ad-note:focus { border-color: #999 !important; background: white !important; }
+    .ad-note-p { font-size: 0.7rem; color: #555; white-space: normal; min-width: 120px; text-align: left; }
+    .ad-chips { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+    .ad-chip { padding: 5px 12px; border-radius: 16px; border: 1px solid #E4E4E0; background: white; font-size: 0.74rem; cursor: pointer; font-family: inherit; color: #555; }
+    .ad-chip.on { background: #1C1C1C; border-color: #1C1C1C; color: white; }
+    .ad-find { margin: 0; padding-left: 18px; font-size: 0.8rem; line-height: 1.75; color: #333; }
+    .ad-find li::marker { color: #BBB; }
+    .ad-find b { font-weight: 700; }
+    .ad-foot { font-size: 0.66rem; color: #AAA; margin-top: 14px; line-height: 1.6; }
+    .ad-empty { text-align: center; color: #BBB; padding: 30px 0; font-size: 0.82rem; }
+    @media (max-width: 640px) {
+      .ad-hero { grid-template-columns: 1fr; }
+      .ad-grade { flex-direction: row; gap: 12px; padding: 12px; }
+      .ad-grade span { margin-top: 0; }
+      .ad-kpis { grid-template-columns: 1fr 1fr 1fr; gap: 6px; }
+      .ad-kpi { padding: 10px; } .ad-kpi-v { font-size: 1rem; }
+      .ad-metrics { grid-template-columns: 1fr 1fr; }
+      .ad-sec { padding: 14px 12px; }
+    }
+    .ip-sec p { font-size: 0.82rem; line-height: 1.75; color: #333; margin: 0 0 10px; }
+    .ip-block { padding: 14px 0 6px; border-top: 1px solid #F0F0EC; }
+    .ip-block:first-of-type { border-top: none; padding-top: 2px; }
+    .ip-h { font-size: 0.92rem; font-weight: 700; margin-bottom: 8px; }
+    .ip-sub { font-size: 0.76rem; font-weight: 700; color: #666; margin: 10px 0 4px; }
+    .ip-table td { vertical-align: top; }
+    .ip-names { white-space: normal !important; font-size: 0.7rem; color: #777; min-width: 220px; line-height: 1.6; }
+    .ip-bar { display: inline-block; width: 60px; height: 6px; background: #F0F0F0; border-radius: 3px; overflow: hidden; vertical-align: middle; margin-right: 6px; }
+    .ip-bar i { display: block; height: 100%; border-radius: 3px; }
+    .ip-routes { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .ip-route { border: 1px solid #EEEDE8; border-radius: 12px; padding: 12px 14px; }
+    .ip-route.on { border-color: #1C1C1C; background: #FAFAF8; }
+    .ip-route-t { font-size: 0.82rem; font-weight: 700; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .ip-route-t span { font-size: 0.62rem; font-weight: 600; background: #1C1C1C; color: white; padding: 2px 8px; border-radius: 9px; }
+    .ip-route-s { font-size: 0.7rem; color: #2E7D32; margin: 4px 0 6px; font-weight: 600; }
+    .ip-route p { font-size: 0.74rem !important; color: #666 !important; margin: 0 !important; line-height: 1.6 !important; }
+    .ip-sug { background: #F7F6F3; border-radius: 12px; padding: 12px 16px; font-size: 0.8rem; line-height: 1.75; color: #333; }
+    .ip-sug ul { margin: 6px 0 0; padding-left: 18px; }
+    .ip-acts li { margin-bottom: 6px; }
+    @media (max-width: 640px) { .ip-routes { grid-template-columns: 1fr; } }
+    @media print {
+      .ad-sec:not(.ip-sec) { break-inside: avoid; }
+      .ip-block { break-inside: avoid; }
+      .ad-table tr { break-inside: avoid; }
+    }
+  </style>
 </head>
 <body>
 
@@ -732,6 +834,7 @@
     <button class="btn-year fin-only" onclick="exportBackup()">備份</button>
     <button class="btn-year proj-only" onclick="openReceivables()">待收款<span class="cnt" id="rc-count"></span></button>
     <button class="btn-year proj-only" onclick="openYearModal()">專案收入</button>
+    <button class="btn-year proj-only" onclick="openAudit()">年度稽核</button>
     <button class="btn-year proj-only" onclick="openCalendar()">時程</button>
     <button class="btn-year btn-more" onclick="event.stopPropagation();openMoreMenu(this)" title="更多">⋯</button>
     <button class="proj-only btn-new" onclick="openModal()" title="新增專案">＋<span class="hide-m"> 新增專案</span></button>
@@ -838,6 +941,13 @@
     <div id="yr-chart"></div>
     <div id="yr-breakdown"></div>
     <div class="yr-note" id="yr-note"></div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="ad-modal" onclick="if(event.target===this)closeAudit()">
+  <div class="modal-sheet">
+    <div class="modal-hd"><div class="modal-ttl">年度稽核</div><div class="ad-tools"><select id="ad-year" onchange="renderAudit()"></select><button type="button" class="btn-year" style="padding:4px 10px;font-size:0.74rem" onclick="openAuditWindow()" title="開新視窗，可列印或存 PDF">列印</button><button type="button" class="btn-year ad-export" style="padding:4px 10px;font-size:0.74rem" onclick="event.stopPropagation();openAuditExportMenu(this)" title="匯出成文字檔，貼給 Claude 做年度職涯分析">匯出給 Claude ▾</button><button class="btn-x" onclick="closeAudit()">✕</button></div></div>
+    <div id="ad-body"></div>
   </div>
 </div>
 
@@ -1331,7 +1441,7 @@
   async function duplicateCase(id) {
     const src = cases.find(x=>x.id===id); if (!src) return;
     const now = Date.now();
-    const items = parseTasks(src.tasks).filter(t => t.type !== 'payment' && t.type !== 'quote').map((t,i) =>
+    const items = parseTasks(src.tasks).filter(t => t.type !== 'payment' && t.type !== 'quote' && t.type !== 'audit' && t.type !== 'memo').map((t,i) =>
       t.type ? { ...t, ...(t.id ? { id: String(now+i+1) } : {}), ...(t.type === 'meta' ? { lost: '' } : {}) }
              : { ...t, id: String(now+i+1), status: '未開始', date: '', note: '' });
     const data = {
@@ -1483,7 +1593,7 @@
   // ── 更多選單 ──────────────────────────────
   function openMoreMenu(anchor) {
     const items = [];
-    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'year',cls:'',label:'專案收入'},{value:'cal',cls:'',label:'時程'},{sep:true});
+    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'year',cls:'',label:'專案收入'},{value:'audit',cls:'',label:'年度稽核'},{value:'cal',cls:'',label:'時程'},{sep:true});
     if (view === 'fin') {
       const acts = [];
       if (window.innerWidth <= 640) {
@@ -1501,7 +1611,7 @@
     if (db && session) items.push({sep:true},{value:'logout',cls:'',label:'登出'});
     else if (db && dbOpen) items.push({sep:true},{value:'login',cls:'',label:'登入'});
     showInlineDD(anchor, items, v => ({
-      rc: openReceivables, year: openYearModal, cal: openCalendar, backup: exportBackup, logout: doLogout,
+      rc: openReceivables, year: openYearModal, audit: openAudit, cal: openCalendar, backup: exportBackup, logout: doLogout,
       login: () => showLogin(true), undo: undoLast,
       missing: () => { missingOnly = true; renderAll(); window.scrollTo(0,0); },
     })[v]());
@@ -1565,6 +1675,15 @@
   const SOURCE_DD_ITEMS = metaItems('案件來源', ['舊客回頭','朋友介紹','IG','官網','主動提案','其他']);
   const LOST_DD_ITEMS = metaItems('終止原因', ['預算不合','檔期衝突','客戶沒下文','我推掉','其他']);
   function caseMeta(c) { return parseTasks(c.tasks).find(t=>t.type==='meta') || {}; }
+  // 案件備註：自由文字，存在 tasks 裡（type:'memo'）；年度稽核會讀裡面的關鍵字
+  function caseMemo(c) { return (parseTasks(c.tasks).find(t=>t.type==='memo') || {}).text || ''; }
+  function saveCaseMemo(el) {
+    const c = cases.find(x=>x.id===viewingId); if (!c) return;
+    const text = el.value.trim(); if (text === caseMemo(c)) return;
+    const all = parseTasks(c.tasks).filter(t=>t.type!=='memo');
+    c.tasks = JSON.stringify(text ? [...all, { type:'memo', text }] : all);
+    syncTasks(c); showToast('備註已儲存 ✓');
+  }
   function setMeta(key, value) {
     const c = cases.find(x=>x.id===viewingId); if (!c) return;
     const meta = { type:'meta', source: caseMeta(c).source || '', lost: caseMeta(c).lost || '', [key]: value || '' };
@@ -2207,6 +2326,485 @@
     document.getElementById('yr-note').textContent = `營業額照實際入帳計算：頭款算在頭款收款日那個月，尾款算在尾款收款日那個月（沒填就算結束日期那個月），案件還沒結案也算；已收頭款但沒填頭款收款日期的先不計。成本算在尾款那個月。日均、結案件數、平均每案金額只看「已完成」且「已結清」的專案，${year} 年共 ${entries.length} 個。金額都是未稅（報價 ÷ 1.05），成本照你填的數字扣。`;
   }
 
+  // ── 年度稽核：把這一年的專案逐案列成檢討表，依類別分組；每個指標給燈號（達標／注意／待改善）──
+  // 案件歸在哪一年跟首頁年度選單一樣（結束日期 → 開始日期 → 建立日期）；金額一律未稅，成本照填的數字
+  const AUDIT_RULES = {
+    win:     { good: 60, warn: 40, hi: true,  target: '≥ 60%' },              // 成交率
+    dailyOk: { good: 70, warn: 50, hi: true,  target: '≥ 70%' },              // 日均達標率
+    margin:  { good: 70, warn: 50, hi: true,  target: '≥ 70%' },              // 毛利率
+    lag:     { good: 30, warn: 60, hi: false, target: '≤ 30 天' },            // 結案後幾天收款
+    repeat:  { good: 30, warn: 15, hi: true,  target: '≥ 30%' },              // 回頭客佔比
+    overdue: { good: 0,  warn: 2,  hi: false, target: '0 案' },               // 完成超過 30 天還沒收齊
+    data:    { good: 90, warn: 70, hi: true,  target: '≥ 90%' },              // 資料完整度
+    daily:   { good: DAILY_GOOD, warn: DAILY_GOOD / 2, hi: true },           // 單案日均
+  };
+  const LIGHT_TEXT = { good: '達標', warn: '注意', bad: '待改善' };
+  const GRADE_TEXT = { A: '優良', B: '合格', C: '待加強', D: '需檢討' };
+  const AUDIT_STATUS = ['已完成','進行中','暫停','接洽中','終止'];
+  function auditLight(key, v) {
+    if (v == null) return '';
+    const r = AUDIT_RULES[key];
+    return r.hi ? (v >= r.good ? 'good' : v >= r.warn ? 'warn' : 'bad') : (v <= r.good ? 'good' : v <= r.warn ? 'warn' : 'bad');
+  }
+  // 燈號平均：達標 2 分、注意 1 分、待改善 0 分
+  function gradeOf(lights) {
+    if (!lights.length) return null;
+    const s = lights.reduce((t,l) => t + (l === 'good' ? 2 : l === 'warn' ? 1 : 0), 0) / lights.length;
+    return s >= 1.67 ? 'A' : s >= 1.2 ? 'B' : s >= 0.6 ? 'C' : 'D';
+  }
+  // 檢討備註：跟其他附加資料一樣存在 tasks 裡（type:'audit'）
+  function caseAuditNote(c) { return (parseTasks(c.tasks).find(t=>t.type==='audit') || {}).note || ''; }
+  function saveAuditNote(id, el) {
+    const c = cases.find(x=>x.id===id); if (!c) return;
+    const note = el.value.trim(); if (note === caseAuditNote(c)) return;
+    const all = parseTasks(c.tasks).filter(t=>t.type!=='audit');
+    c.tasks = JSON.stringify(note ? [...all, { type:'audit', note }] : all);
+    syncTasks(c); showToast('檢討備註已儲存 ✓');
+  }
+  const caseWhen = c => c.end_date || c.start_date || (c.created_at||'').slice(0,10);
+  // 回頭客：來源填「舊客回頭」，或同一個客戶在這個案子之前就有別的案件
+  function isRepeatCase(c) {
+    if (caseMeta(c).source === '舊客回頭') return true;
+    const client = (c.client||'').trim(); if (!client) return false;
+    return cases.some(x => x.id !== c.id && (x.client||'').trim() === client && caseWhen(x) < caseWhen(c));
+  }
+  // 備註關鍵字：年度稽核只能照規則判讀，寫到這些詞就會標出來（先檢查「不會再合作」這類否定，避免誤判成會回頭）
+  const MEMO_SIGNALS = [
+    { k: 'no',       l: 'bad',  t: '備註：不建議再合作', re: /不會再|不再合作|不想再|不合作|不推薦|黑名單|不接了/ },
+    { k: 'again',    l: 'good', t: '備註：可能再合作',   re: /明年|續約|下一季|下次|長期|每年|再合作|再找|系列|回購/ },
+    { k: 'bargain',  l: 'warn', t: '備註：議價壓力',     re: /殺價|砍價|議價|壓價|預算低|預算不足|預算很少|要求打折/ },
+    { k: 'rush',     l: 'warn', t: '備註：急件',         re: /急件|很趕|趕件|臨時|時間很緊|爆肝/ },
+    { k: 'revise',   l: 'warn', t: '備註：修改多',       re: /改稿|一直改|反覆|修改很多|追加|改很多次|需求一直變/ },
+    { k: 'slowpay',  l: 'warn', t: '備註：付款拖延',     re: /拖款|催款|遲付|拖很久|一直沒付/ },
+    { k: 'referral', l: '',     t: '備註：人脈介紹',     re: /介紹|引薦|轉介|牽線/ },
+    { k: 'brand',    l: '',     t: '備註：品牌加分',     re: /曝光|作品集|代表作|加分|形象很好|媒體報導/ },
+  ];
+  function memoSignals(c) {
+    const m = caseMemo(c); if (!m) return [];
+    const hit = MEMO_SIGNALS.filter(s => s.re.test(m));
+    return hit.some(s => s.k === 'no') ? hit.filter(s => s.k !== 'again') : hit;
+  }
+  function auditCase(c) {
+    const pay = payLabel(c.payment_status), net = netQuote(c), cost = costTotal(c), days = caseDays(c);
+    const alive = c.status !== '終止', charged = net > 0 && pay !== '互惠';
+    const won = charged && (c.status === '進行中' || c.status === '已完成'), done = charged && c.status === '已完成';
+    const profit = net - cost;
+    const margin = alive && charged ? Math.round(profit / net * 100) : null;
+    const daily = alive && charged && days ? Math.round(profit / days) : null;
+    const paid = casePaidDate(c);
+    const lag = paid && c.end_date ? Math.round((new Date(paid+'T00:00:00') - new Date(c.end_date+'T00:00:00')) / 86400000) : null;
+    const unsettled = done && pay !== '已結清';
+    const unpaidDays = unsettled && c.end_date ? Math.max(-daysFromToday(c.end_date), 0) : null;
+    // 評等只給已完成、有收費的案件：看日均、毛利率、收款速度（還沒收齊的看拖了幾天）
+    const lights = done ? [auditLight('daily', daily), auditLight('margin', margin), auditLight('lag', lag == null ? null : Math.max(lag, 0))].filter(Boolean) : [];
+    if (unpaidDays != null && unpaidDays > 30) lights.push(unpaidDays > 60 ? 'bad' : 'warn');
+    const tags = [];
+    if (!alive) tags.push(['lost', '終止・' + (caseMeta(c).lost || '未填原因')]);
+    if (pay === '互惠') tags.push(['', '互惠']);
+    if (daily != null && daily < DAILY_GOOD) tags.push([auditLight('daily', daily), '日均偏低']);
+    if (margin != null && margin < AUDIT_RULES.margin.good) tags.push([auditLight('margin', margin), '毛利偏低']);
+    if (lag != null && lag > 30) tags.push([auditLight('lag', lag), `${lag} 天才收款`]);
+    if (unsettled) tags.push([unpaidDays > 60 ? 'bad' : unpaidDays > 30 ? 'warn' : '', unpaidDays != null ? `完成 ${unpaidDays} 天未收齊` : '尚未收齊']);
+    const dl = deadlineInfo(c); if (dl.cls === 'dl-over') tags.push(['bad', 'Deadline ' + dl.note]);
+    missingWhat(c).forEach(m => tags.push(['', m]));
+    if (won && !caseMeta(c).source) tags.push(['', '未填來源']);
+    const sig = memoSignals(c);
+    sig.forEach(s => tags.push([s.l === 'good' ? 'good' : s.l, s.t]));
+    return { c, pay, net, gross: Number(c.quote_amount) || 0, cost, profit, days, alive, charged, won, done, margin, daily, lag, unsettled, unpaidDays,
+      sig: sig.map(s => s.k), memo: caseMemo(c), due: unsettled ? amountDue(c) : 0, grade: gradeOf(lights), tags, flagged: tags.some(t => t[0] === 'bad' || t[0] === 'warn' || t[0] === 'lost') };
+  }
+  // 一組案件的總體指標（全年、各類別、去年都用這個算）
+  function auditSummary(rows) {
+    const pct = (a, b) => b ? Math.round(a / b * 100) : null;
+    const sumBy = (list, k) => list.reduce((s,r) => s + r[k], 0);
+    const won = rows.filter(r => r.won), lost = rows.filter(r => !r.alive), done = rows.filter(r => r.done);
+    const talking = rows.filter(r => r.c.status === '接洽中').length;
+    const dailyPool = done.filter(r => r.daily != null), dDays = sumBy(dailyPool, 'days');
+    const doneNet = sumBy(done, 'net'), lagPool = done.filter(r => r.lag != null);
+    const live = rows.filter(r => r.alive), overdue = done.filter(r => r.unpaidDays != null && r.unpaidDays > 30);
+    const m = {
+      n: rows.length, won: won.length, lost: lost.length, done: done.length, talking,
+      wonNet: sumBy(won, 'net'), wonGross: sumBy(won, 'gross'), doneNet, doneCost: sumBy(done, 'cost'),
+      win: pct(won.length, won.length + lost.length),
+      avgDaily: dDays ? Math.round(sumBy(dailyPool, 'profit') / dDays) : null,
+      dailyOk: pct(dailyPool.filter(r => r.daily >= DAILY_GOOD).length, dailyPool.length), dailyN: dailyPool.length,
+      margin: doneNet ? Math.round((doneNet - sumBy(done, 'cost')) / doneNet * 100) : null,
+      lag: lagPool.length ? Math.round(lagPool.reduce((s,r) => s + Math.max(r.lag, 0), 0) / lagPool.length) : null, lagN: lagPool.length,
+      repeat: pct(won.filter(r => isRepeatCase(r.c)).length, won.length),
+      overdue: done.length ? overdue.length : null, dueAmt: sumBy(done, 'due'),
+      data: pct(live.filter(r => !isMissing(r.c)).length, live.length), missing: live.filter(r => isMissing(r.c)).length,
+    };
+    m.lights = { win: auditLight('win', m.win), dailyOk: auditLight('dailyOk', m.dailyOk), margin: auditLight('margin', m.margin), lag: auditLight('lag', m.lag),
+      repeat: auditLight('repeat', m.repeat), overdue: auditLight('overdue', m.overdue), data: auditLight('data', m.data) };
+    m.grade = gradeOf(Object.values(m.lights).filter(Boolean));
+    return m;
+  }
+  let adFilter = 'all';
+  function openAudit() {
+    const thisYear = viewYear === 'all' ? String(new Date().getFullYear()) : viewYear;
+    const years = [...new Set([thisYear, String(new Date().getFullYear()), ...cases.map(caseYear)])].sort((a,b) => b - a);
+    document.getElementById('ad-year').innerHTML = years.map(y => `<option value="${y}"${y === thisYear ? ' selected' : ''}>${y} 年</option>`).join('');
+    adFilter = 'all';
+    renderAudit();
+    document.getElementById('ad-modal').classList.add('open');
+  }
+  function closeAudit() { document.getElementById('ad-modal').classList.remove('open'); }
+  function setAuditFilter(f) { adFilter = f; renderAudit(); }
+  function adOpenCase(id) {
+    const c = cases.find(x=>x.id===id); if (!c) return;
+    closeAudit();
+    if (!inViewYear(c)) viewYear = caseYear(c);
+    if (viewingId !== id) openPanel(id); else renderAll();
+  }
+  function renderAudit() {
+    document.getElementById('ad-body').innerHTML = auditHTML(document.getElementById('ad-year').value, false);
+  }
+  // 新視窗：同一份內容，備註改成純文字，方便列印或存成 PDF
+  function openAuditWindow() {
+    const year = document.getElementById('ad-year').value;
+    const w = window.open('', '_blank');
+    if (!w) { showToast('瀏覽器擋住了新視窗，請允許彈出視窗'); return; }
+    w.document.write(`<!doctype html><html lang="zh-Hant"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+      <title>${year} 年度稽核・B VISION LAB</title>
+      <style>
+        * { box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'PingFang TC', 'Segoe UI', sans-serif; margin: 0; color: #1A1A1A; background: white; }
+        .ad-page { max-width: 1180px; margin: 0 auto; padding: 24px 20px 40px; }
+        .ad-bar { display: flex; justify-content: space-between; align-items: center; gap: 12px; margin-bottom: 16px; }
+        .ad-bar h1 { font-size: 1.3rem; margin: 0; }
+        .ad-bar h1 small { font-size: 0.75rem; color: #AAA; font-weight: 500; margin-left: 8px; }
+        .ad-bar button { padding: 8px 16px; background: #1C1C1C; color: white; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; }
+        @media print { .ad-bar button { display: none; } .ad-page { padding: 0; } @page { margin: 14mm; } }
+      </style>
+      <style>${document.getElementById('audit-css').textContent}</style></head>
+      <body><div class="ad-page"><div class="ad-bar"><h1>${year} 年度稽核<small>製表 ${new Date().toLocaleDateString('zh-TW')}</small></h1><button onclick="print()">列印／存 PDF</button></div>
+      ${auditHTML(year, true)}</div></body></html>`);
+    w.document.close();
+  }
+  // ── 年度稽核：工作室與個人 IP 發展建議（照規則從案件資料整理，不是即時 AI 分析）──
+  // 金額都用未稅、只看確定合作（進行中＋已完成、有收費）的案件
+  const IP_BIG = 200000, IP_MID = 100000;   // 大案 ≥ 20 萬、中案 10–20 萬、小案 < 10 萬
+  const IP_CAP = 12;                         // 大師路線：一年案件上限
+  const IP_ROUTES = {
+    A: { name: '路線 A：精品少量', spec: '一年 8–12 案，平均每案 $300,000 以上，全年約 $2,400,000–3,000,000', desc: '每個案子都是 Tatler、BMW、Starbucks 這個等級。案子少，有更多時間創作、辦個展、建立藝術圈地位，這是「大師路線」。' },
+    B: { name: '路線 B：混合模式', spec: '一年 15–20 案，大中小混搭，全年約 $1,500,000–2,000,000', desc: '案子多但雜，時間被切割、創作時間壓縮，形象容易模糊。' },
+  };
+  function auditIP(rows, year, S, money) {
+    const won = rows.filter(r => r.won);
+    if (!won.length) return '';
+    const wan = n => n >= 10000 ? (Math.round(n / 1000) / 10).toLocaleString() + ' 萬' : money(n);
+    const clientOf = r => (r.c.client || '').trim() || r.c.name;
+
+    // 1. 先看今年實際的數字：大中小案的件數、金額、花掉的天數
+    const tiers = [
+      { k: '大案', d: '20 萬以上', list: won.filter(r => r.net >= IP_BIG) },
+      { k: '中案', d: '10–20 萬', list: won.filter(r => r.net >= IP_MID && r.net < IP_BIG) },
+      { k: '小案', d: '10 萬以下', list: won.filter(r => r.net < IP_MID) },
+    ].map(t => ({ ...t, amt: t.list.reduce((s,r) => s + r.net, 0), days: t.list.reduce((s,r) => s + r.days, 0) }));
+    const allDays = tiers.reduce((s,t) => s + t.days, 0);
+    const pct = (a, b) => b ? Math.round(a / b * 100) : 0;
+    const tierRows = tiers.filter(t => t.list.length).map(t => `<tr>
+        <td class="l"><b>${t.k}</b><small style="color:#AAA;margin-left:6px">${t.d}</small></td><td>${t.list.length} 案</td><td>${money(t.amt)}</td>
+        <td><div class="ip-bar"><i style="width:${pct(t.amt, S.wonNet)}%;background:#4CAF50"></i></div>${pct(t.amt, S.wonNet)}%</td>
+        <td>${allDays ? `<div class="ip-bar"><i style="width:${pct(t.days, allDays)}%;background:#F0A030"></i></div>${pct(t.days, allDays)}%` : '—'}</td>
+        <td class="l ip-names">${t.list.sort((a,b) => b.net - a.net).map(r => `${esc(clientOf(r))} ${wan(r.net)}`).join('、')}</td></tr>`).join('');
+    const small = tiers[2], big = tiers[0];
+    const tierNote = small.list.length >= 3 && allDays && pct(small.days, allDays) > pct(small.amt, S.wonNet)
+      ? `小案 ${small.list.length} 個只佔收入 ${pct(small.amt, S.wonNet)}%，卻用掉 ${pct(small.days, allDays)}% 的工作天數，耗費的時間和精力不成比例。`
+      : big.list.length ? `${big.list.length} 個大案就佔了收入的 ${pct(big.amt, S.wonNet)}%。` : '';
+    const numbers = `<div class="ip-block"><div class="ip-h">先看 ${year} 年實際的數字</div>
+      <p>確定合作 <b>${won.length} 案</b>，總金額 <b>${money(S.wonNet)}</b>（未稅，含稅 ${money(S.wonGross)}），平均每案 ${money(Math.round(S.wonNet / won.length))}。${tierNote}</p>
+      <div class="ad-scroll"><table class="ad-table ip-table"><tr><th class="l">案件大小</th><th>件數</th><th>金額</th><th>佔收入</th><th>佔工作天數</th><th class="l">案子</th></tr>${tierRows}</table></div></div>`;
+
+    // 2. 路線檢視：照目前的速度換算全年，看比較接近哪條路
+    const now = new Date(), months = +year < now.getFullYear() ? 12 : +year === now.getFullYear() ? now.getMonth() + 1 : 12;
+    const pace = Math.round(won.length / months * 12), avg = Math.round(S.wonNet / won.length);
+    const near = pace <= IP_CAP && avg >= IP_BIG ? 'A' : 'B';
+    const routeCard = k => `<div class="ip-route${near === k ? ' on' : ''}"><div class="ip-route-t">${IP_ROUTES[k].name}${near === k ? '<span>你目前比較接近</span>' : ''}</div><div class="ip-route-s">${IP_ROUTES[k].spec}</div><p>${IP_ROUTES[k].desc}</p></div>`;
+    const over = pace - IP_CAP;
+    const route = `<div class="ip-block"><div class="ip-h">合理的案件數量，取決於你想走哪條路</div>
+      <p>${months < 12 ? `${year} 年到 ${months} 月確定合作 ${won.length} 案，照這個速度全年約 <b>${pace} 案</b>` : `${year} 年確定合作 <b>${won.length} 案</b>`}，平均每案 ${money(avg)}。</p>
+      <div class="ip-routes">${routeCard('A')}${routeCard('B')}</div>
+      <div class="ip-sug"><b>建議：目標是大師定位，答案是路線 A。</b>一年 ${IP_CAP - 2}–${IP_CAP} 個案子是上限，超過就開始用時間換錢，而不是用品牌換錢。
+        ${over > 0 ? `<br>照目前的速度會超過上限約 <b>${over} 案</b>${small.list.length ? `，優先從 ${small.list.length} 個小案裡減` : ''}。` : ''}
+        <ul><li>大型創作委託 3–4 個（每個 20 萬以上）${big.list.length ? `・今年 ${big.list.length} 個` : ''}</li><li>精品時尚合作 3–4 個（現場揮毫、品牌拍攝）</li><li>文化藝術合作 2–3 個（展覽、空間裝置）</li><li>主動推掉不符合定位的詢問，不管金額多少</li></ul></div></div>`;
+
+    // 3. 明年可能回來的客戶：跨年度合作或今年多次 → 高；今年 10 萬以上 → 中；其他 → 需要主動維繫
+    const groups = new Map();
+    won.forEach(r => { const k = clientOf(r); if (!groups.has(k)) groups.set(k, []); groups.get(k).push(r); });
+    const high = [], mid = [], keep = [], noAgain = [];
+    for (const [k, list] of groups) {
+      const all = cases.filter(c => ((c.client || '').trim() || c.name) === k && ['進行中','已完成'].includes(c.status) && netQuote(c) > 0);
+      const yrs = new Set(all.map(caseYear)).size, amt = list.reduce((s,r) => s + r.net, 0);
+      const repeat = list.some(r => caseMeta(r.c).source === '舊客回頭');
+      const memoAgain = list.some(r => r.sig.includes('again'));
+      if (list.some(r => r.sig.includes('no'))) noAgain.push([k, '備註寫了不建議再合作', amt]);
+      else if (yrs >= 2) high.push([k, `已經合作 ${yrs} 個年度`, amt]);
+      else if (list.length >= 2) high.push([k, `今年 ${list.length} 個案子，系列合作`, amt]);
+      else if (repeat) high.push([k, '舊客回頭', amt]);
+      else if (memoAgain) high.push([k, '備註提到明年／後續還有合作', amt]);
+      else if (amt >= IP_MID) mid.push([k, `今年 ${wan(amt)} 的${amt >= IP_BIG ? '大' : '中'}案，合作順利的話下一個系列會想到你`, amt]);
+      else keep.push([k, wan(amt), amt]);
+    }
+    const li = list => list.sort((a,b) => b[2] - a[2]).map(([k, why]) => `<li><b>${esc(k)}</b>——${why}</li>`).join('');
+    const back = `<div class="ip-block"><div class="ip-h">先盤點哪些客戶明年可能回來</div>
+      ${high.length ? `<div class="ip-sub">高機率回頭</div><ul class="ad-find">${li(high)}</ul>` : ''}
+      ${mid.length ? `<div class="ip-sub">中機率回頭</div><ul class="ad-find">${li(mid)}</ul>` : ''}
+      ${noAgain.length ? `<div class="ip-sub">不建議再接</div><ul class="ad-find">${li(noAgain)}</ul>` : ''}
+      ${keep.length ? `<div class="ip-sub">需要主動維繫</div><ul class="ad-find"><li>${keep.sort((a,b) => b[2] - a[2]).map(x => esc(x[0])).join('、')}——這類品牌每年有不同的行銷窗口，不主動聯繫就會忘記你</li></ul>` : ''}</div>`;
+
+    // 4. 拓圈與具體行動：接下來的活動、最有效的來源、大案作品整理
+    const today = new Date(); today.setHours(0,0,0,0);
+    const iso = d => `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const from = iso(today), to = iso(new Date(today.getTime() + 90 * 86400000));
+    const upcoming = cases.filter(c => ['進行中','接洽中'].includes(c.status) && c.start_date && c.start_date >= from && c.start_date <= to).sort((a,b) => a.start_date.localeCompare(b.start_date));
+    const srcs = new Map(); won.forEach(r => { const k = caseMeta(r.c).source; if (k) srcs.set(k, (srcs.get(k) || 0) + r.net); });
+    const topSrc = [...srcs].sort((a,b) => b[1] - a[1])[0];
+    const acts = [];
+    if (upcoming.length) acts.push(`<b>接下來 90 天的活動，認真對待</b>：${upcoming.slice(0, 4).map(c => `${+c.start_date.slice(5,7)}/${+c.start_date.slice(8,10)} ${esc(c.name)}`).join('、')}。這不只是去露臉，去之前研究參與的人和品牌，找到 2–3 個值得建立關係的人，結束後主動 follow up。`);
+    acts.push(`<b>讓現有窗口幫你介紹</b>：${high.concat(mid).slice(0, 3).map(x => esc(x[0])).join('、') || '合作過的客戶'}——每一個窗口都是一個圈子的入口，合作順利時直接請對方介紹同圈子的品牌。${topSrc ? `今年確定合作金額最多的來源是「${esc(topSrc[0])}」（${money(topSrc[1])}），值得多投入。` : ''}`);
+    const refs = won.filter(r => r.sig.includes('referral'));
+    if (refs.length) acts.push(`<b>回頭感謝介紹人</b>：${refs.map(r => esc(clientOf(r))).join('、')} 是透過介紹來的（看備註），年底記得謝謝牽線的人，維持這條人脈。`);
+    const bargainN = won.filter(r => r.sig.includes('bargain')).length;
+    if (bargainN) acts.push(`<b>守住價格</b>：${bargainN} 案被議價。走大師路線不靠降價接案，報價單直接寫最低接案金額，預算不夠的禮貌推掉。`);
+    if (keep.length) acts.push(`<b>年底前主動問候</b>：寄新年作品或手寫卡片給「需要主動維繫」的 ${keep.length} 個客戶，讓明年的行銷窗口記得你。`);
+    acts.push(`<b>把大案變成個人 IP 的作品</b>：${big.list.length ? big.list.map(r => esc(clientOf(r))).join('、') + ' 這幾個案子' : '今年的代表案'}完成後整理成作品集與 IG 貼文，用品牌名氣替自己背書。`);
+    if (small.list.length >= 3) acts.push(`<b>把時間還給創作</b>：小案花了 ${small.days} 天，明年減少一半就多出約 ${Math.round(small.days / 2)} 天，可以拿來準備個展或個人創作系列。`);
+    const action = `<div class="ip-block"><div class="ip-h">拓圈與具體可以做的事</div><ol class="ad-find ip-acts">${acts.map(a => `<li>${a}</li>`).join('')}</ol></div>`;
+
+    return `<div class="ad-sec ip-sec"><div class="ad-sec-t">工作室與個人 IP 發展建議</div>
+      <div class="ad-sec-d">依照這一年的案件資料自動整理，金額都只算確定合作（進行中＋已完成）、未稅。客戶回頭機率是依合作紀錄和備註裡的關鍵字推算，僅供參考。</div>
+      ${numbers}${route}${back}${action}</div>`;
+  }
+  // ── 年度稽核匯出給 Claude：一份 Markdown 文字檔，開頭是請 Claude 分析的提示語，後面是全部數據、逐案資料和備註 ──
+  function openAuditExportMenu(anchor) {
+    showInlineDD(anchor, [{value:'md',cls:'',label:'下載檔案（.md）'},{value:'copy',cls:'',label:'複製全文'}], exportAuditForClaude);
+  }
+  function auditMarkdown(year) {
+    const money = n => n == null ? '—' : (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString();
+    const pctT = v => v == null ? '—' : v + '%';
+    const cell = v => String(v ?? '').replace(/\|/g, '／').replace(/\s*\n\s*/g, ' ');
+    const table = (head, list) => `| ${head.join(' | ')} |\n| ${head.map(() => '---').join(' | ')} |\n` + list.map(r => `| ${r.map(cell).join(' | ')} |`).join('\n');
+    const order = c => AUDIT_STATUS.indexOf(c.status);
+    const rows = cases.filter(c => caseYear(c) === year).map(auditCase).sort((a,b) => (order(a.c) - order(b.c)) || caseWhen(a.c).localeCompare(caseWhen(b.c)));
+    const S = auditSummary(rows);
+    // 畫面上「重點發現」那幾句直接拿來用（去掉 HTML）
+    const tmp = document.createElement('div'); tmp.innerHTML = auditHTML(year, true);
+    const finds = [...tmp.querySelectorAll('.ad-sec')].find(s => s.querySelector('.ad-sec-t')?.textContent === '重點發現');
+    const findLines = finds ? [...finds.querySelectorAll('li')].map(li => '- ' + li.textContent.trim()) : [];
+    const catIdx = k => { const i = Object.keys(CAT_PREFIX).indexOf(k); return i < 0 ? 99 : i; };
+    const cats = [...new Set(rows.map(r => r.c.category || '其他'))].sort((a,b) => catIdx(a) - catIdx(b));
+    const years = [...new Set(cases.map(caseYear))].filter(y => y !== year).sort((a,b) => b - a);
+    const L = [];
+    L.push(`# ${year} 年度稽核資料・B VISION LAB 視平線`, '');
+    L.push('## 請 Claude 做的事', '',
+      `以下是我（簡伯諭 Boyu Chien，書法藝術家、B VISION LAB 視平線創辦人、平面設計師）${year} 年所有專案的統整資料，由我的專案管理系統匯出。請根據這些數據和我寫的備註，幫我做一份「年度職涯分析」，用繁體中文、像朋友一樣直接說，包含：`, '',
+      '1. 今年實際的數字：大案、中案、小案各佔多少收入和時間，哪些案子投入產出不成比例',
+      '2. 我現在比較接近哪條路線（精品少量的大師路線，或大中小混搭的混合模式），以及明年合理的案件數量和組合',
+      '3. 盤點明年可能回來的客戶（高機率、中機率、需要主動維繫），以及哪些不建議再接',
+      '4. 拓圈：今年接觸到的窗口和圈子，哪些值得系統性地往裡走，具體可以做的三件事',
+      '5. 個人 IP 發展：哪些案子最能累積我的藝術家品牌，明年該怎麼取捨',
+      '6. 其他你從數據或備註裡看出、我可能沒注意到的事', '',
+      '我的目標是走向大師定位，用品牌換錢而不是用時間換錢。數據不足的地方請直接說，並告訴我明年該多記錄什麼。', '');
+    L.push('## 計算方式說明', '',
+      '- 金額都是未稅（報價 ÷ 1.05），成本是我自己填的實際支出',
+      '- 確定合作＝狀態是進行中或已完成、而且有收費；互惠、沒報價、暫停、接洽中、終止都不算',
+      `- 日均收入＝（未稅金額 − 成本）÷ 專案天數（起訖日期含頭尾）；我的達標線是每天 $${DAILY_GOOD.toLocaleString()}`,
+      '- 收款天數＝尾款收款日期 − 專案結束日期',
+      '- 案件依結束日期歸年（沒有就看開始日期）', '');
+    L.push('## 年度總覽', '', table(['指標', '數值', '目標', '燈號'], [
+      ['確定合作案件', `${S.won} 案（已完成 ${S.done}、進行中 ${S.won - S.done}）`, '', ''],
+      ['接洽中／終止', `${S.talking} 案／${S.lost} 案`, '', ''],
+      ['確定合作總金額（未稅）', `${money(S.wonNet)}（含稅 ${money(S.wonGross)}）`, '', ''],
+      ['平均日均收入（已完成）', money(S.avgDaily), `≥ $${DAILY_GOOD.toLocaleString()}`, ''],
+      ['成交率', pctT(S.win), AUDIT_RULES.win.target, LIGHT_TEXT[S.lights.win] || '資料不足'],
+      ['日均達標率', pctT(S.dailyOk), AUDIT_RULES.dailyOk.target, LIGHT_TEXT[S.lights.dailyOk] || '資料不足'],
+      ['毛利率', pctT(S.margin), AUDIT_RULES.margin.target, LIGHT_TEXT[S.lights.margin] || '資料不足'],
+      ['平均收款天數', S.lag == null ? '—' : S.lag + ' 天', AUDIT_RULES.lag.target, LIGHT_TEXT[S.lights.lag] || '資料不足'],
+      ['回頭客佔比', pctT(S.repeat), AUDIT_RULES.repeat.target, LIGHT_TEXT[S.lights.repeat] || '資料不足'],
+      ['逾期待收（完成超過 30 天未收齊）', S.overdue == null ? '—' : `${S.overdue} 案，待收 ${money(S.dueAmt)}`, AUDIT_RULES.overdue.target, LIGHT_TEXT[S.lights.overdue] || '資料不足'],
+      ['資料完整度', pctT(S.data), AUDIT_RULES.data.target, LIGHT_TEXT[S.lights.data] || '資料不足'],
+      ['年度總評（系統依燈號計算）', S.grade ? `${S.grade}（${GRADE_TEXT[S.grade]}）` : '—', '', ''],
+    ]), '');
+    L.push('## 分類統計', '', table(['類別', '案件', '確定合作／終止', '成交率', '確定合作金額', '成本', '毛利率', '平均日均', '平均收款天數'],
+      cats.map(k => { const s = auditSummary(rows.filter(r => (r.c.category || '其他') === k));
+        return [k, s.n, `${s.won}／${s.lost}`, pctT(s.win), money(s.wonNet), money(s.doneCost), pctT(s.margin), money(s.avgDaily), s.lag == null ? '—' : s.lag + ' 天']; })), '');
+    if (findLines.length) L.push('## 系統自動整理的重點（規則計算，僅供參考）', '', ...findLines, '');
+    L.push(`## ${year} 年逐案資料`, '', table(
+      ['案件', '客戶', '類別', '狀態', '付款', '起訖日期', '天數', '報價含稅', '未稅', '成本', '毛利率', '日均', '收款天數', '案件來源', '終止原因', '系統評等', '系統標籤'],
+      rows.map(r => { const c = r.c, m = caseMeta(c);
+        return [c.name, c.client || '', c.category || '其他', c.status, r.pay || '', c.start_date ? `${c.start_date} ～ ${c.end_date || ''}` : '未排', r.days || '', r.gross ? money(r.gross) : '', r.net ? money(r.net) : '', r.cost ? money(r.cost) : '',
+          r.margin == null ? '' : r.margin + '%', r.daily == null ? '' : money(r.daily), r.lag == null ? (r.unpaidDays != null ? '未收齊' : '') : r.lag, m.source || '', m.lost || '',
+          r.grade || '', r.tags.map(t => t[1]).join('、')]; })), '');
+    const notes = rows.filter(r => r.memo || caseAuditNote(r.c));
+    L.push('## 案件備註（我自己寫的細節，請特別參考）', '');
+    if (notes.length) notes.forEach(r => {
+      L.push(`### ${r.c.name}${r.c.client ? `（${r.c.client}）` : ''}`);
+      if (r.memo) L.push(r.memo);
+      if (caseAuditNote(r.c)) L.push('', `檢討：${caseAuditNote(r.c)}`);
+      L.push('');
+    });
+    else L.push('（今年還沒有寫備註）', '');
+    if (years.length) {
+      L.push('## 其他年度（對照用）', '');
+      years.forEach(y => {
+        const yr = cases.filter(c => caseYear(c) === y).map(auditCase), s = auditSummary(yr);
+        if (!s.won && !s.lost) return;
+        L.push(`### ${y} 年：確定合作 ${s.won} 案、${money(s.wonNet)}（未稅）、平均日均 ${money(s.avgDaily)}、成交率 ${pctT(s.win)}`);
+        yr.filter(r => r.won || !r.alive).forEach(r => L.push(`- ${r.c.name}｜${r.c.client || '未填客戶'}｜${r.c.category || '其他'}｜${r.c.status}｜${r.net ? money(r.net) : '無報價'}${r.memo ? `｜備註：${cell(r.memo)}` : ''}`));
+        L.push('');
+      });
+    }
+    L.push('---', `匯出時間：${new Date().toLocaleString('zh-TW', { timeZone: 'Asia/Taipei' })}`);
+    return L.join('\n');
+  }
+  async function exportAuditForClaude(kind) {
+    const year = document.getElementById('ad-year').value;
+    if (!cases.some(c => caseYear(c) === year)) { showToast(`${year} 年沒有專案可以匯出`); return; }
+    const text = auditMarkdown(year);
+    if (kind === 'md') {
+      downloadBlob(new Blob([text], { type: 'text/markdown;charset=utf-8' }), `年度稽核-${year}.md`);
+      showToast('已下載，把檔案拖進 Claude 對話就可以 ✓');
+      return;
+    }
+    try { await navigator.clipboard.writeText(text); }
+    catch (e) {
+      const ta = document.createElement('textarea'); ta.value = text; ta.style.cssText = 'position:fixed;opacity:0';
+      document.body.appendChild(ta); ta.select();
+      let ok = false; try { ok = document.execCommand('copy'); } catch (_) {}
+      ta.remove();
+      if (!ok) { showToast('⚠ 複製失敗，改用下載檔案'); return; }
+    }
+    showToast('已複製，貼到 Claude 對話就可以 ✓');
+  }
+  function auditHTML(year, forPrint) {
+    const money = n => (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString();
+    const order = c => AUDIT_STATUS.indexOf(c.status);
+    const rows = cases.filter(c => caseYear(c) === year).map(auditCase)
+      .sort((a,b) => (order(a.c) - order(b.c)) || caseWhen(a.c).localeCompare(caseWhen(b.c)));
+    if (!rows.length) return `<div class="ad-empty">${year} 年還沒有任何專案</div>`;
+    const S = auditSummary(rows);
+    const prevRows = cases.filter(c => caseYear(c) === String(+year - 1)).map(auditCase), P = prevRows.length ? auditSummary(prevRows) : null;
+    const vsPrev = (cur, prev, fmt) => P && prev != null && cur != null ? `去年 ${fmt(prev)}` : '';
+
+    // 1. 總評：等級＋三個大數字
+    const hero = `<div class="ad-hero">
+      <div class="ad-grade g-${S.grade || 'B'}"><b>${S.grade || '—'}</b><span>年度總評${S.grade ? '・' + GRADE_TEXT[S.grade] : ''}</span></div>
+      <div class="ad-kpis">
+        <div class="ad-kpi"><div class="ad-kpi-l">確定合作</div><div class="ad-kpi-v">${S.won} 案</div><div class="ad-kpi-s">已完成 ${S.done}・進行中 ${S.won - S.done}（另有接洽中 ${S.talking}・終止 ${S.lost}）${P ? `<br>去年 ${P.won} 案` : ''}</div></div>
+        <div class="ad-kpi"><div class="ad-kpi-l">確定合作總金額（未稅）</div><div class="ad-kpi-v" style="color:#2E7D32">${money(S.wonNet)}</div><div class="ad-kpi-s">只算進行中＋已完成・含稅 ${money(S.wonGross)}${P ? `<br>去年 ${money(P.wonNet)}` : ''}</div></div>
+        <div class="ad-kpi"><div class="ad-kpi-l">平均日均收入</div><div class="ad-kpi-v" style="color:${S.avgDaily == null ? '#BBB' : S.avgDaily >= DAILY_GOOD ? '#2E7D32' : '#C62828'}">${S.avgDaily == null ? '—' : money(S.avgDaily)}</div><div class="ad-kpi-s">已完成案件，扣成本後${P && P.avgDaily != null ? `<br>去年 ${money(P.avgDaily)}` : ''}</div></div>
+      </div>
+    </div>`;
+
+    // 2. 指標評估：七項燈號
+    const metric = (key, label, val, sub) => {
+      const l = S.lights[key];
+      return `<div class="ad-m ${l}"><div class="ad-m-top"><span class="ad-m-l">${label}</span><span class="ad-light ${l}">${l ? LIGHT_TEXT[l] : '資料不足'}</span></div>
+        <div class="ad-m-v">${val}</div><div class="ad-m-s">目標 ${AUDIT_RULES[key].target}${sub ? '・' + sub : ''}</div></div>`;
+    };
+    const pctT = v => v == null ? '—' : v + '%';
+    const metrics = `<div class="ad-sec"><div class="ad-sec-t">指標評估</div>
+      <div class="ad-sec-d">綠色達標、橙色注意、紅色待改善；年度總評是七項燈號的平均。</div>
+      <div class="ad-metrics">
+        ${metric('win', '成交率', pctT(S.win), `成交 ${S.won}・終止 ${S.lost}${vsPrev(S.win, P && P.win, pctT) ? '・' + vsPrev(S.win, P.win, pctT) : ''}`)}
+        ${metric('dailyOk', '日均達標率', pctT(S.dailyOk), `日均 ≥ $${DAILY_GOOD.toLocaleString()} 的案件，共 ${S.dailyN} 案可算`)}
+        ${metric('margin', '毛利率', pctT(S.margin), `成本 ${money(S.doneCost)}${vsPrev(S.margin, P && P.margin, pctT) ? '・' + vsPrev(S.margin, P.margin, pctT) : ''}`)}
+        ${metric('lag', '平均收款天數', S.lag == null ? '—' : S.lag + ' 天', `結案後幾天收到尾款，${S.lagN} 案有填`)}
+        ${metric('repeat', '回頭客佔比', pctT(S.repeat), '成交案件中舊客回頭的比例')}
+        ${metric('overdue', '逾期待收', S.overdue == null ? '—' : S.overdue + ' 案', `完成超過 30 天未收齊${S.dueAmt ? `・待收 ${money(S.dueAmt)}` : ''}`)}
+        ${metric('data', '資料完整度', pctT(S.data), S.missing ? `${S.missing} 案缺日期或報價` : '日期、報價都有填')}
+      </div></div>`;
+
+    // 3. 分類評估：每個類別一列
+    const catIdx = k => { const i = Object.keys(CAT_PREFIX).indexOf(k); return i < 0 ? 99 : i; };
+    const cats = [...new Set(rows.map(r => r.c.category || '其他'))].sort((a,b) => catIdx(a) - catIdx(b));
+    const byCat = cats.map(k => ({ k, rows: rows.filter(r => (r.c.category || '其他') === k) })).map(g => ({ ...g, s: auditSummary(g.rows) }));
+    const cell = (v, l, txt) => `<td class="${l === 'good' ? 'pos' : l === 'bad' ? 'neg' : l === 'warn' ? 'mid' : ''}">${v == null ? '<span class="ad-est">—</span>' : txt}</td>`;
+    const catTable = `<div class="ad-sec"><div class="ad-sec-t">分類評估</div>
+      <div class="ad-sec-d">確定合作金額只算進行中＋已完成；毛利率、日均、收款天數只看已完成的案件。</div>
+      <div class="ad-scroll"><table class="ad-table">
+        <tr><th class="l">類別</th><th>案件</th><th>成交／終止</th><th>成交率</th><th>確定合作金額</th><th>成本</th><th>毛利率</th><th>平均日均</th><th>日均達標</th><th>平均收款</th><th>評等</th></tr>
+        ${byCat.map(({k, s}) => `<tr><td class="l"><b>${esc(k)}</b></td><td>${s.n}</td><td>${s.won}／${s.lost}</td>
+          ${cell(s.win, s.lights.win, s.win + '%')}<td>${money(s.wonNet)}</td><td>${money(s.doneCost)}</td>
+          ${cell(s.margin, s.lights.margin, s.margin + '%')}${cell(s.avgDaily, auditLight('daily', s.avgDaily), money(s.avgDaily))}
+          ${cell(s.dailyOk, s.lights.dailyOk, s.dailyOk + '%')}${cell(s.lag, s.lights.lag, s.lag + ' 天')}
+          <td>${s.grade ? `<span class="ad-g g-${s.grade}">${s.grade}</span>` : '<span class="ad-est">—</span>'}</td></tr>`).join('')}
+      </table></div></div>`;
+
+    // 4. 重點發現：自動整理的觀察
+    const finds = [];
+    const ranked = byCat.filter(g => g.s.avgDaily != null).sort((a,b) => b.s.avgDaily - a.s.avgDaily);
+    if (ranked.length > 1) finds.push(`日均最高的類別是<b>${esc(ranked[0].k)}</b>（${money(ranked[0].s.avgDaily)}），最低是<b>${esc(ranked.at(-1).k)}</b>（${money(ranked.at(-1).s.avgDaily)}）。`);
+    else if (ranked.length) finds.push(`已完成案件都在<b>${esc(ranked[0].k)}</b>，日均 ${money(ranked[0].s.avgDaily)}。`);
+    const clients = new Map(); rows.filter(r => r.won).forEach(r => { const k = (r.c.client||'').trim() || '未填客戶'; clients.set(k, (clients.get(k)||0) + r.net); });
+    const topC = [...clients].sort((a,b) => b[1] - a[1])[0];
+    if (topC && S.wonNet) { const share = Math.round(topC[1] / S.wonNet * 100); finds.push(`最大客戶是<b>${esc(topC[0])}</b>，佔確定合作金額 ${share}%${share >= 40 ? '，收入集中在單一客戶，風險偏高' : ''}。`); }
+    const srcs = new Map(); rows.filter(r => r.won).forEach(r => { const k = caseMeta(r.c).source; if (k) srcs.set(k, (srcs.get(k)||0) + r.net); });
+    const topS = [...srcs].sort((a,b) => b[1] - a[1])[0];
+    if (topS) finds.push(`確定合作金額最多的來源是<b>${esc(topS[0])}</b>（${money(topS[1])}）。`);
+    const reasons = new Map(); rows.filter(r => !r.alive).forEach(r => { const k = caseMeta(r.c).lost || '未填原因'; reasons.set(k, (reasons.get(k)||0) + 1); });
+    const topR = [...reasons].sort((a,b) => b[1] - a[1])[0];
+    if (topR) finds.push(`終止 ${S.lost} 案，最常見的原因是<b>${esc(topR[0])}</b>（${topR[1]} 案）。`);
+    const lows = rows.filter(r => r.done && r.daily != null && r.daily < DAILY_GOOD).sort((a,b) => a.daily - b.daily).slice(0, 3);
+    if (lows.length) finds.push(`日均最低：${lows.map(r => `${esc(r.c.name)}（${money(r.daily)}）`).join('、')}。`);
+    if (S.overdue) finds.push(`有 <b>${S.overdue} 案</b>完成超過 30 天還沒收齊，記得催款。`);
+    if (S.missing) finds.push(`${S.missing} 案缺日期或報價，補齊後指標會更準。`);
+    const sigList = k => rows.filter(r => r.won && r.sig.includes(k));
+    const bargain = sigList('bargain'), rush = sigList('rush'), revise = sigList('revise');
+    if (bargain.length) finds.push(`${bargain.length} 案備註提到<b>議價壓力</b>（${bargain.map(r => esc(r.c.name)).join('、')}），明年報價可以先講清楚最低金額。`);
+    if (rush.length) finds.push(`${rush.length} 案是<b>急件</b>（${rush.map(r => esc(r.c.name)).join('、')}），可以考慮加收急件費。`);
+    if (revise.length) finds.push(`${revise.length} 案<b>修改次數多</b>（${revise.map(r => esc(r.c.name)).join('、')}），報價單可以寫明包含幾次修改。`);
+    const memoN = rows.filter(r => r.won && r.memo).length, wonN = rows.filter(r => r.won).length;
+    if (wonN && memoN < wonN) finds.push(`確定合作的 ${wonN} 案中有 ${memoN} 案寫了備註，寫得越多，下面的建議會越準。`);
+    const findHTML = finds.length ? `<div class="ad-sec"><div class="ad-sec-t">重點發現</div><ul class="ad-find">${finds.map(f => `<li>${f}</li>`).join('')}</ul></div>` : '';
+
+    const ipHTML = auditIP(rows, year, S, money);
+
+    // 5. 逐案檢討：依類別分組，每組最後一列小計
+    const shown = r => forPrint || adFilter === 'all' || (adFilter === 'flag' ? r.flagged : adFilter === 'done' ? r.c.status === '已完成' : adFilter === 'lost' ? !r.alive : true);
+    const nFlag = rows.filter(r => r.flagged).length;
+    const chips = forPrint ? '' : `<div class="ad-chips">${[['all', `全部 ${rows.length}`], ['flag', `需檢討 ${nFlag}`], ['done', `已完成 ${rows.filter(r => r.c.status === '已完成').length}`], ['lost', `終止 ${S.lost}`]]
+      .map(([v, t]) => `<button type="button" class="ad-chip${adFilter === v ? ' on' : ''}" onclick="setAuditFilter('${v}')">${t}</button>`).join('')}</div>`;
+    const range = c => c.start_date ? `${+c.start_date.slice(5,7)}/${+c.start_date.slice(8,10)}${c.end_date && c.end_date !== c.start_date ? '–' + +c.end_date.slice(5,7) + '/' + +c.end_date.slice(8,10) : ''}` : '未排日期';
+    const caseRow = r => {
+      const c = r.c, est = !r.done ? ' ad-est' : '';
+      const note = caseAuditNote(c);
+      const noteCell = forPrint ? `<td class="ad-note-p">${esc(note)}</td>`
+        : `<td class="l" onclick="event.stopPropagation()"><input type="text" class="ad-note" placeholder="寫下檢討…" value="${esc(note).replace(/"/g,'&quot;')}" onblur="saveAuditNote('${c.id}',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"></td>`;
+      return `<tr class="ad-row"${forPrint ? '' : ` onclick="adOpenCase('${c.id}')"`}>
+        <td class="l ad-name"><b>${esc(c.name)}</b><small>${c.client ? esc(c.client) + '・' : ''}${range(c)}</small>${r.memo ? `<div class="ad-memo${forPrint ? ' full' : ''}" title="${esc(r.memo).replace(/"/g,'&quot;')}">${esc(r.memo)}</div>` : ''}</td>
+        <td class="l"><span class="ad-st s-${c.status}">${c.status}</span></td>
+        <td>${r.days ? r.days + ' 天' : '<span class="ad-est">—</span>'}</td>
+        <td class="${r.alive ? '' : 'ad-est'}">${r.net ? money(r.net) : '<span class="ad-est">—</span>'}</td>
+        <td>${r.cost ? money(r.cost) : '<span class="ad-est">—</span>'}</td>
+        <td class="${r.margin == null ? '' : r.done ? { good:'pos', warn:'mid', bad:'neg' }[auditLight('margin', r.margin)] : 'ad-est'}">${r.margin == null ? '<span class="ad-est">—</span>' : r.margin + '%'}</td>
+        <td class="${r.daily == null ? '' : r.done ? { good:'pos', warn:'mid', bad:'neg' }[auditLight('daily', r.daily)] : 'ad-est'}">${r.daily == null ? '<span class="ad-est">—</span>' : money(r.daily)}</td>
+        <td>${r.lag == null ? (r.unpaidDays != null ? `<span class="${r.unpaidDays > 30 ? 'neg' : 'ad-est'}">未收</span>` : '<span class="ad-est">—</span>') : r.lag <= 0 ? '當天' : r.lag + ' 天'}</td>
+        <td>${r.grade ? `<span class="ad-g g-${r.grade}" title="${GRADE_TEXT[r.grade]}">${r.grade}</span>` : '<span class="ad-est">—</span>'}</td>
+        <td class="l"><div class="ad-tags">${r.tags.map(([l, t]) => `<span class="ad-tag ${l}">${esc(t)}</span>`).join('')}</div></td>
+        ${noteCell}
+      </tr>`;
+    };
+    const groups = byCat.map(g => {
+      const list = g.rows.filter(shown); if (!list.length) return '';
+      const s = g.s;
+      return `<tr class="ad-cat"><td class="l" colspan="11">${esc(g.k)}<small>確定合作 ${s.won} 案・${money(s.wonNet)}${s.grade ? '・評等 ' + s.grade : ''}</small></td></tr>
+        ${list.map(caseRow).join('')}
+        <tr class="ad-sub"><td class="l" colspan="3">小計（只算確定合作）</td><td>${money(s.wonNet)}</td><td>${money(s.doneCost)}</td><td>${s.margin == null ? '—' : s.margin + '%'}</td><td>${s.avgDaily == null ? '—' : money(s.avgDaily)}</td><td>${s.lag == null ? '—' : s.lag + ' 天'}</td><td colspan="3"></td></tr>`;
+    }).join('');
+    const caseTable = `<div class="ad-sec"><div class="ad-sec-t">逐案檢討</div>
+      <div class="ad-sec-d">評等只給已完成、有收費的案件（看日均、毛利率、收款速度）；灰字是還沒完成的預估值。${forPrint ? '' : '點案件可打開詳細資料，最右邊可以寫檢討備註。'}</div>
+      ${chips}
+      ${groups ? `<div class="ad-scroll"><table class="ad-table">
+        <tr><th class="l">案件</th><th class="l">狀態</th><th>天數</th><th>金額（未稅）</th><th>成本</th><th>毛利率</th><th>日均</th><th>收款</th><th>評等</th><th class="l">檢討重點</th><th class="l">備註</th></tr>
+        ${groups}
+      </table></div>` : '<div class="ad-empty">這個篩選沒有案件</div>'}</div>`;
+
+    const foot = `<div class="ad-foot">案件依結束日期歸年（沒有就看開始日期）。金額都是未稅（報價 ÷ 1.05），成本照填的數字扣。成交＝進行中或已完成、而且有收費；互惠、沒填報價、暫停、接洽中都不算成交。收款天數＝尾款收款日期 − 結束日期。</div>`;
+    return hero + metrics + catTable + findHTML + ipHTML + caseTable + foot;
+  }
+
   // ── 發票資訊（存在 tasks 欄位裡的 type:'invoice'）──────
   const INVOICE_FIELDS = { title:'iv-title', header:'iv-header', tax_id:'iv-taxid', total:'iv-total', recipient:'iv-recipient', phone:'iv-phone', address:'iv-address' };
   function caseInvoice(c) { return parseTasks(c.tasks).find(t=>t.type==='invoice') || {}; }
@@ -2800,6 +3398,9 @@
         <button class="btn-add-task" onclick="addCost()">＋ 新增</button>
         ${costs.length?`<div class="cost-total"><span>合計</span><b>NT$ ${costTotal(c).toLocaleString()}</b></div>`:''}
       </div>
+
+      <div class="section-hd">備註</div>
+      <textarea class="note-ta" id="memo-ta" placeholder="自由記錄這個案子的細節：怎麼來的、窗口是誰、合作感受、客戶有沒有提到明年、有沒有議價……年度稽核會參考這裡的內容" onblur="saveCaseMemo(this)">${esc(caseMemo(c))}</textarea>
 
       <div class="note-foot" style="justify-content:flex-end;margin-top:16px">
         ${monthAvgHTML(c)}
