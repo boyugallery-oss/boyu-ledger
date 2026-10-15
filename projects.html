@@ -129,6 +129,11 @@
     @keyframes pulse { 0%,100%{opacity:1}50%{opacity:.4} }
     .search-box { padding: 6px 12px; font-size: 0.8rem; border: 1.5px solid #E0E0E0; border-radius: 8px; background: white; width: 150px; font-family: inherit; outline: none; }
     .search-box:focus { border-color: #AAA; }
+    /* 標題列的年份、搜尋、按鈕都一樣高（32px） */
+    .app-header .search-box { height: 32px; min-height: 32px; max-height: 32px; line-height: 30px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; margin: 0; border-width: 1px; border-color: #E4E4E0; -webkit-appearance: none; appearance: none; }
+    .app-header .search-box:focus { border-color: #AAA; }
+    .app-header .btn-new, .app-header .btn-year { height: 32px; box-sizing: border-box; padding-top: 0; padding-bottom: 0; line-height: 1; display: inline-flex; align-items: center; justify-content: center; }
+    .app-header .btn-new { gap: 4px; }
     .btn-new { padding: 6px 14px; background: #1C1C1C; color: white; border: none; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
     .btn-new:hover { background: #333; }
     .btn-year { padding: 6px 14px; background: white; color: #1C1C1C; border: 1px solid #E4E4E0; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: inherit; white-space: nowrap; }
@@ -233,6 +238,12 @@
     }
     /* 待收款 */
     .ttl-cnt { color: #C62828; margin-left: 6px; }
+    /* 待收付視窗標題：待收款｜待付款 兩個分頁，沒選到的整個變淺灰 */
+    .mt-tab { cursor: pointer; transition: color 0.12s; }
+    .mt-tab:not(.on) { color: #CFCFCB; }
+    .mt-tab:not(.on) .ttl-cnt { color: inherit; }
+    .mt-tab:not(.on):hover { color: #999; }
+    .mt-sep { color: #DDD; margin: 0 8px; font-weight: 400; }
     .rc-total { background: #F7F6F3; border-radius: 14px; padding: 14px 16px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: baseline; }
     .rc-total span { font-size: 0.74rem; color: #999; }
     .rc-total b { font-size: 1.15rem; color: #C62828; }
@@ -841,14 +852,14 @@
     <div class="sync-dot loading" id="sync-dot"></div>
     <span class="lock-hint" id="lock-hint" style="display:none" onclick="showToast('資料庫還沒上鎖：任何人拿到網址都看得到資料')">未上鎖</span>
   </div>
-  <div style="display:flex;align-items:center;gap:10px;min-width:0">
+  <div style="display:flex;align-items:center;gap:6px;min-width:0">
     <button class="btn-year year-select" id="year-select" title="年度" onclick="event.stopPropagation();openYearMenu(this)"></button>
     <input class="proj-only search-box" type="text" id="search-input" placeholder="搜尋" oninput="renderAll()">
     <button class="btn-year" id="undo-btn" style="display:none" title="復原上一步（⌘Z）" onclick="undoLast()">↩ 復原</button>
     <button class="btn-year" id="fin-undo" style="display:none" title="復原上一步（⌘Z）" onclick="finUndo()">↩ 復原</button>
     <button class="btn-year fin-only" onclick="event.stopPropagation();openFinExportMenu(this)">匯出 ▾</button>
     <button class="btn-year fin-only" onclick="exportBackup()">備份</button>
-    <button class="btn-year proj-only" onclick="event.stopPropagation();openMoneyMenu(this)">待收款<span class="cnt" id="rc-count"></span> ▾</button>
+    <button class="btn-year proj-only" onclick="openReceivables()">待收付款</button>
     <button class="btn-year proj-only" onclick="openYearModal()">專案收入</button>
     <button class="btn-year proj-only" onclick="openAudit()">年度稽核</button>
     <button class="btn-year proj-only" onclick="openCalendar()">時程</button>
@@ -992,17 +1003,9 @@
 
 <div class="modal-overlay" id="rc-modal" onclick="if(event.target===this)closeReceivables()">
   <div class="modal-sheet">
-    <div class="modal-hd"><div class="modal-ttl">待收款<span class="ttl-cnt" id="rc-ttl-cnt"></span></div><button class="btn-x" onclick="closeReceivables()">✕</button></div>
+    <div class="modal-hd"><div class="modal-ttl"><span class="mt-tab" id="rc-tab" onclick="openReceivables()">待收款<span class="ttl-cnt" id="rc-ttl-cnt"></span></span><span class="mt-sep">｜</span><span class="mt-tab" id="ap-tab" onclick="openPayables()">待付款<span class="ttl-cnt" id="ap-ttl-cnt"></span></span></div><button class="btn-x" onclick="closeReceivables()">✕</button></div>
     <div class="rc-total"><span id="rc-total-label"></span><b id="rc-total-amt"></b></div>
     <div id="rc-list"></div>
-  </div>
-</div>
-
-<div class="modal-overlay" id="ap-modal" onclick="if(event.target===this)closePayables()">
-  <div class="modal-sheet">
-    <div class="modal-hd"><div class="modal-ttl">待付款<span class="ttl-cnt" id="ap-ttl-cnt"></span></div><button class="btn-x" onclick="closePayables()">✕</button></div>
-    <div class="rc-total"><span id="ap-total-label"></span><b id="ap-total-amt"></b></div>
-    <div id="ap-list"></div>
   </div>
 </div>
 
@@ -1471,7 +1474,7 @@
     const src = cases.find(x=>x.id===id); if (!src) return;
     const now = Date.now();
     const items = parseTasks(src.tasks).filter(t => t.type !== 'payment' && t.type !== 'quote' && t.type !== 'audit' && t.type !== 'memo').map((t,i) =>
-      t.type ? { ...t, ...(t.id ? { id: String(now+i+1) } : {}), ...(t.type === 'meta' ? { lost: '' } : {}), ...(t.type === 'cost' ? { date: '', status: '未付款' } : {}) }
+      t.type ? { ...t, ...(t.id ? { id: String(now+i+1) } : {}), ...(t.type === 'meta' ? { lost: '', got: '' } : {}), ...(t.type === 'cost' ? { date: '', status: '未付款' } : {}) }
              : { ...t, id: String(now+i+1), status: '未開始', date: '', note: '' });
     const data = {
       id: String(now), created_at: new Date().toISOString(),
@@ -1622,7 +1625,7 @@
   // ── 更多選單 ──────────────────────────────
   function openMoreMenu(anchor) {
     const items = [];
-    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'ap',cls:'',label:`待付款（${payables().length}）`},{value:'year',cls:'',label:'專案收入'},{value:'audit',cls:'',label:'年度稽核'},{value:'cal',cls:'',label:'時程'},{sep:true});
+    if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:"待收付款"},{value:'year',cls:'',label:'專案收入'},{value:'audit',cls:'',label:'年度稽核'},{value:'cal',cls:'',label:'時程'},{sep:true});
     if (view === 'fin') {
       const acts = [];
       if (window.innerWidth <= 640) {
@@ -1704,6 +1707,16 @@
   const SOURCE_DD_ITEMS = metaItems('案件來源', ['舊客回頭','朋友介紹','IG','官網','主動提案','其他']);
   const LOST_DD_ITEMS = metaItems('終止原因', ['預算不合','檔期衝突','客戶沒下文','我推掉','其他']);
   function caseMeta(c) { return parseTasks(c.tasks).find(t=>t.type==='meta') || {}; }
+  // 接案日期：確定接下這個案子的那天（存在 meta.got）。沒填就用「建立專案那天」和「開始日期」比較早的那個：
+  // 很多舊案是做完才補進系統，接案不可能晚於開工
+  function caseCreatedDate(c) {
+    const made = c.created_at ? new Date(c.created_at).toLocaleDateString('sv-SE', { timeZone: 'Asia/Taipei' }) : '';
+    const start = c.start_date || c.end_date || '';
+    return made && start ? (start < made ? start : made) : made || start;
+  }
+  function caseGotDate(c) { return caseMeta(c).got || caseCreatedDate(c); }
+  // 年度稽核看「哪一年接到的」；專案收入、財務、首頁年份還是看執行和收款日期
+  function auditYear(c) { return caseGotDate(c).slice(0,4) || caseYear(c); }
   // 案件備註：自由文字，存在 tasks 裡（type:'memo'）；年度稽核會讀裡面的關鍵字
   function caseMemo(c) { return (parseTasks(c.tasks).find(t=>t.type==='memo') || {}).text || ''; }
   function saveCaseMemo(el) {
@@ -1715,9 +1728,9 @@
   }
   function setMeta(key, value) {
     const c = cases.find(x=>x.id===viewingId); if (!c) return;
-    const meta = { type:'meta', source: caseMeta(c).source || '', lost: caseMeta(c).lost || '', [key]: value || '' };
+    const meta = { type:'meta', source: caseMeta(c).source || '', lost: caseMeta(c).lost || '', got: caseMeta(c).got || '', [key]: value || '' };
     const all = parseTasks(c.tasks).filter(t=>t.type!=='meta');
-    c.tasks = JSON.stringify((meta.source || meta.lost) ? [...all, meta] : all);
+    c.tasks = JSON.stringify((meta.source || meta.lost || meta.got) ? [...all, meta] : all);
     syncTasks(c); renderAll(); renderPanel();
   }
   function caseReceived(c) { return Number(casePayment(c).received) || 0; }
@@ -1794,12 +1807,19 @@
       .map(c => { const d = c.end_date || c.start_date; return { c, due: amountDue(c), done: c.status === '已完成', days: c.status === '已完成' && d ? -daysFromToday(d) : null }; })
       .sort((a,b) => (b.done - a.done) || ((b.days ?? -1) - (a.days ?? -1)));
   }
+  // 待收付視窗：標題兩個分頁，數字兩邊都要即時算
+  function setMoneyTab(tab) {
+    document.getElementById('rc-ttl-cnt').textContent = receivables().length || '';
+    document.getElementById('ap-ttl-cnt').textContent = payables().length || '';
+    document.getElementById('rc-tab').classList.toggle('on', tab === 'rc');
+    document.getElementById('ap-tab').classList.toggle('on', tab === 'ap');
+  }
   function openReceivables() {
+    setMoneyTab('rc');
     const list = receivables();
     const total = list.reduce((s,r)=>s+r.due,0);
     document.getElementById('rc-total-label').textContent = `${viewYear === 'all' ? '全部年度' : viewYear + ' 年'}・${list.length} 個專案還沒收齊`;
     document.getElementById('rc-total-amt').textContent = 'NT$ ' + total.toLocaleString();
-    document.getElementById('rc-ttl-cnt').textContent = list.length || '';
     document.getElementById('rc-list').innerHTML = list.map(({c,due,done,days}) => {
       const pay = payLabel(c.payment_status) || '未收款';
       const when = !done ? '進行中' : days === null ? '已完成・沒有日期' : days <= 0 ? '剛完成' : `<span class="${days>=30?'late':''}">完成後 ${days} 天</span>`;
@@ -1812,7 +1832,7 @@
         <button type="button" class="rc-copy" title="複製催款訊息" aria-label="複製催款訊息" onclick="event.stopPropagation();copyReminder('${c.id}')"><svg viewBox="0 0 24 24" width="17" height="17" fill="currentColor" aria-hidden="true"><path d="M12 2a1.5 1.5 0 0 0-1.5 1.5v.6A6 6 0 0 0 6 10v4.2l-1.6 2.4A1 1 0 0 0 5.2 18h13.6a1 1 0 0 0 .8-1.4L18 14.2V10a6 6 0 0 0-4.5-5.9v-.6A1.5 1.5 0 0 0 12 2z"/><path d="M9.5 19.5a2.5 2.5 0 0 0 5 0z"/></svg></button>
       </div>`;
     }).join('') || `<div class="empty">${viewYear === 'all' ? '' : viewYear + ' 年'}沒有待收的款項</div>`;
-    document.getElementById('rc-modal').classList.add('open');
+    pinMoneySheet();
   }
   // 催款訊息：帶入專案名稱（去掉前面的內部編號）與待收金額，複製後貼到 LINE
   function reminderText(c) {
@@ -2088,13 +2108,26 @@
     }
     showToast('催款訊息已複製，可以貼到 LINE ✓');
   }
-  function closeReceivables() { document.getElementById('rc-modal').classList.remove('open'); }
+  function closeReceivables() {
+    const ov = document.getElementById('rc-modal'), sh = ov.querySelector('.modal-sheet');
+    ov.classList.remove('open'); delete ov.dataset.pinned;
+    ov.style.alignItems = sh.style.marginTop = sh.style.maxHeight = sh.style.minHeight = '';
+  }
+  // 切換待收款／待付款時視窗上緣不動：第一次打開（待收款）時記下位置，之後只讓下方伸縮
+  function pinMoneySheet() {
+    const ov = document.getElementById('rc-modal'), sh = ov.querySelector('.modal-sheet');
+    ov.classList.add('open');
+    if (ov.dataset.pinned) return;
+    ov.dataset.pinned = '1';
+    const r = sh.getBoundingClientRect();
+    if (window.innerWidth > 600) {   // 電腦：視窗置中 → 改成靠上，上緣固定在原本的位置
+      ov.style.alignItems = 'flex-start';
+      sh.style.marginTop = Math.max(0, r.top - 24) + 'px';
+      sh.style.maxHeight = `calc(100vh - ${Math.round(r.top) + 24}px)`;
+    } else sh.style.minHeight = r.height + 'px';   // 手機：從底部升起，固定高度讓上緣不動
+  }
 
   // ── 待付款：成本裡狀態是「未付款」的每一筆（有填支出日期的看日期歸年，沒填的跟著案子的年份）──
-  function openMoneyMenu(anchor) {
-    showInlineDD(anchor, [{value:'rc',cls:'',label:`待收款（${receivables().length}）`},{value:'ap',cls:'',label:`待付款（${payables().length}）`}],
-      v => v === 'rc' ? openReceivables() : openPayables());
-  }
   function payables() {
     const out = [];
     cases.forEach(c => caseCosts(c).forEach((t, idx) => {
@@ -2105,11 +2138,11 @@
     return out.sort((a,b) => (a.t.date || '9999').localeCompare(b.t.date || '9999'));   // 越早花的越上面，沒填日期的放最後
   }
   function openPayables() {
+    setMoneyTab('ap');
     const list = payables(), total = list.reduce((s,x) => s + x.amt, 0);
-    document.getElementById('ap-total-label').textContent = `${viewYear === 'all' ? '全部年度' : viewYear + ' 年'}・${list.length} 筆成本還沒付`;
-    document.getElementById('ap-total-amt').textContent = 'NT$ ' + total.toLocaleString();
-    document.getElementById('ap-ttl-cnt').textContent = list.length || '';
-    document.getElementById('ap-list').innerHTML = list.map(({c,t,idx,amt}) => {
+    document.getElementById('rc-total-label').textContent = `${viewYear === 'all' ? '全部年度' : viewYear + ' 年'}・${list.length} 筆成本還沒付`;
+    document.getElementById('rc-total-amt').textContent = 'NT$ ' + total.toLocaleString();
+    document.getElementById('rc-list').innerHTML = list.map(({c,t,idx,amt}) => {
       const ago = t.date ? -daysFromToday(t.date) : null;
       const when = !t.date ? '沒填支出日期' : ago > 0 ? `${fmtDate(t.date)}・<span class="${ago>=30?'late':''}">${ago} 天前</span>` : ago === 0 ? `${fmtDate(t.date)}・今天` : `${fmtDate(t.date)}・還沒到`;
       return `<div class="rc-row" onclick="closePayables();if(viewingId!=='${c.id}')openPanel('${c.id}')">
@@ -2121,7 +2154,7 @@
         <button type="button" class="rc-copy" title="標記為已付款" aria-label="標記為已付款" onclick="event.stopPropagation();markCostPaid('${c.id}',${idx})"><svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></button>
       </div>`;
     }).join('') || `<div class="empty">${viewYear === 'all' ? '' : viewYear + ' 年'}沒有待付的成本</div>`;
-    document.getElementById('ap-modal').classList.add('open');
+    pinMoneySheet();
   }
   function markCostPaid(id, idx) {
     const c = cases.find(x => x.id === id); if (!c) return;
@@ -2131,7 +2164,7 @@
     renderAll(); openPayables();
     showToast(`「${(costs[idx].name || '').trim() || '未命名成本'}」已標記為已付款 ✓`);
   }
-  function closePayables() { document.getElementById('ap-modal').classList.remove('open'); }
+  function closePayables() { closeReceivables(); }
 
   // ── 全年收入 ──────────────────────────────
   // 只計入「已完成」且付款「已結清」的專案；金額算在結束日期那個月（沒有結束日就用開始日），沒有日期的不列入
@@ -2545,7 +2578,7 @@
   let adFilter = 'all';
   function openAudit() {
     const thisYear = viewYear === 'all' ? String(new Date().getFullYear()) : viewYear;
-    const years = [...new Set([thisYear, String(new Date().getFullYear()), String(new Date().getFullYear() + 1), ...cases.map(caseYear)])].sort((a,b) => b - a);
+    const years = [...new Set([thisYear, String(new Date().getFullYear()), String(new Date().getFullYear() + 1), ...cases.map(auditYear)])].sort((a,b) => b - a);
     document.getElementById('ad-year').innerHTML = years.map(y => `<option value="${y}"${y === thisYear ? ' selected' : ''}>${y} 年</option>`).join('');
     adFilter = 'all';
     renderAudit();
@@ -2689,7 +2722,7 @@
     const cell = v => String(v ?? '').replace(/\|/g, '／').replace(/\s*\n\s*/g, ' ');
     const table = (head, list) => `| ${head.join(' | ')} |\n| ${head.map(() => '---').join(' | ')} |\n` + list.map(r => `| ${r.map(cell).join(' | ')} |`).join('\n');
     const order = c => AUDIT_STATUS.indexOf(c.status);
-    const rows = cases.filter(c => caseYear(c) === year).map(auditCase).sort((a,b) => (order(a.c) - order(b.c)) || caseWhen(a.c).localeCompare(caseWhen(b.c)));
+    const rows = cases.filter(c => auditYear(c) === year).map(auditCase).sort((a,b) => (order(a.c) - order(b.c)) || caseWhen(a.c).localeCompare(caseWhen(b.c)));
     const S = auditSummary(rows);
     // 畫面上「重點發現」那幾句直接拿來用（去掉 HTML）
     const tmp = document.createElement('div'); tmp.innerHTML = auditHTML(year, true);
@@ -2697,7 +2730,7 @@
     const findLines = finds ? [...finds.querySelectorAll('li')].map(li => '- ' + li.textContent.trim()) : [];
     const catIdx = k => { const i = Object.keys(CAT_PREFIX).indexOf(k); return i < 0 ? 99 : i; };
     const cats = [...new Set(rows.map(r => r.c.category || '其他'))].sort((a,b) => catIdx(a) - catIdx(b));
-    const years = [...new Set(cases.map(caseYear))].filter(y => y !== year).sort((a,b) => b - a);
+    const years = [...new Set(cases.map(auditYear))].filter(y => y !== year).sort((a,b) => b - a);
     const L = [];
     L.push(`# ${year} 年度稽核資料・B VISION LAB 視平線`, '');
     L.push('## 請 Claude 做的事', '',
@@ -2714,7 +2747,7 @@
       '- 確定合作＝狀態是進行中或已完成、而且有收費；互惠、沒報價、暫停、接洽中、終止都不算',
       `- 日均收入＝（未稅金額 − 成本）÷ 專案天數（起訖日期含頭尾）；我的達標線是每天 $${DAILY_GOOD.toLocaleString()}`,
       '- 收款天數＝尾款收款日期 − 專案結束日期',
-      '- 案件依結束日期歸年（沒有就看開始日期）；在手案件是這一年建立、但排到之後執行的', '');
+      '- 案件依接案日期歸年（沒填就看建立專案那天或開始日期，取比較早的），這一年接到、之後才執行的也算在這一年；實際收入則照收款日期算在收款那年', '');
     L.push('## 年度總覽', '', table(['指標', '數值', '目標', '燈號'], [
       ['確定合作案件', `${S.won} 案（已完成 ${S.done}、進行中 ${S.won - S.done}）`, '', ''],
       ['接洽中／終止', `${S.talking} 案／${S.lost} 案`, '', ''],
@@ -2735,13 +2768,13 @@
         return [k, s.n, `${s.won}／${s.lost}`, pctT(s.win), money(s.wonNet), money(s.doneCost), pctT(s.margin), money(s.avgDaily), s.lag == null ? '—' : s.lag + ' 天']; })), '');
     if (findLines.length) L.push('## 系統自動整理的重點（規則計算，僅供參考）', '', ...findLines, '');
     L.push(`## ${year} 年逐案資料`, '', table(
-      ['案件', '客戶', '類別', '狀態', '付款', '起訖日期', '天數', '報價含稅', '未稅', '成本', '毛利率', '日均', '收款天數', '案件來源', '終止原因', '系統評等', '系統標籤'],
+      ['案件', '客戶', '類別', '狀態', '付款', '接案日期', '起訖日期', '天數', '報價含稅', '未稅', '成本', '毛利率', '日均', '收款天數', '案件來源', '終止原因', '系統評等', '系統標籤'],
       rows.map(r => { const c = r.c, m = caseMeta(c);
-        return [c.name, c.client || '', c.category || '其他', c.status, r.pay || '', c.start_date ? `${c.start_date} ～ ${c.end_date || ''}` : '未排', r.days || '', r.gross ? money(r.gross) : '', r.net ? money(r.net) : '', r.cost ? money(r.cost) : '',
+        return [c.name, c.client || '', c.category || '其他', c.status, r.pay || '', caseGotDate(c), c.start_date ? `${c.start_date} ～ ${c.end_date || ''}` : '未排', r.days || '', r.gross ? money(r.gross) : '', r.net ? money(r.net) : '', r.cost ? money(r.cost) : '',
           r.margin == null ? '' : r.margin + '%', r.daily == null ? '' : money(r.daily), r.lag == null ? (r.unpaidDays != null ? '未收齊' : '') : r.lag, m.source || '', m.lost || '',
           r.grade || '', r.tags.map(t => t[1]).join('、')]; })), '');
     const carriedList = carriedCases(year);
-    if (carriedList.length) L.push(`## 在手案件（${year} 接到、之後才執行，收入不算在 ${year}）`, '', table(['案件', '客戶', '狀態', '執行日期', '金額（未稅）', '備註'],
+    if (carriedList.length) L.push(`## 其中排到之後才執行的案子（${year} 接到，收入會在收款那年入帳）`, '', table(['案件', '客戶', '狀態', '執行日期', '金額（未稅）', '備註'],
       carriedList.map(c => [c.name, c.client || '', c.status, `${c.start_date || ''}${c.end_date && c.end_date !== c.start_date ? ' ～ ' + c.end_date : ''}`, netQuote(c) ? money(netQuote(c)) : '', caseMemo(c)])), '');
     const notes = rows.filter(r => r.memo || caseAuditNote(r.c));
     L.push('## 案件備註（我自己寫的細節，請特別參考）', '');
@@ -2755,7 +2788,7 @@
     if (years.length) {
       L.push('## 其他年度（對照用）', '');
       years.forEach(y => {
-        const yr = cases.filter(c => caseYear(c) === y).map(auditCase), s = auditSummary(yr);
+        const yr = cases.filter(c => auditYear(c) === y).map(auditCase), s = auditSummary(yr);
         if (!s.won && !s.lost) return;
         L.push(`### ${y} 年：確定合作 ${s.won} 案、${money(s.wonNet)}（未稅）、平均日均 ${money(s.avgDaily)}、成交率 ${pctT(s.win)}`);
         yr.filter(r => r.won || !r.alive).forEach(r => L.push(`- ${r.c.name}｜${r.c.client || '未填客戶'}｜${r.c.category || '其他'}｜${r.c.status}｜${r.net ? money(r.net) : '無報價'}${r.memo ? `｜備註：${cell(r.memo)}` : ''}`));
@@ -2767,7 +2800,7 @@
   }
   async function exportAuditForClaude(kind) {
     const year = document.getElementById('ad-year').value;
-    if (!cases.some(c => caseYear(c) === year)) { showToast(`${year} 年沒有專案可以匯出`); return; }
+    if (!cases.some(c => auditYear(c) === year)) { showToast(`${year} 年沒有專案可以匯出`); return; }
     const text = auditMarkdown(year);
     if (kind === 'md') {
       downloadBlob(new Blob([text], { type: 'text/markdown;charset=utf-8' }), `年度稽核-${year}.md`);
@@ -2784,20 +2817,19 @@
     }
     showToast('已複製，貼到 Claude 對話就可以 ✓');
   }
-  // 在手案件：這一年建立（接到）、但日期排在之後年份執行的案子；收入算在執行那年，這裡只列出來
-  const caseCreatedYear = c => (c.created_at || '').slice(0,4);
+  // 這一年接到、但排到之後年份執行的案子：已經算進這一年的稽核，表格裡標「YYYY 執行」
   function carriedCases(year) {
-    return cases.filter(c => caseCreatedYear(c) === year && caseYear(c) > year && c.status !== '終止')
+    return cases.filter(c => auditYear(c) === year && caseYear(c) > year && c.status !== '終止')
       .sort((a,b) => caseWhen(a).localeCompare(caseWhen(b)));
   }
   function auditHTML(year, forPrint) {
     const money = n => (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString();
     const order = c => AUDIT_STATUS.indexOf(c.status);
-    const rows = cases.filter(c => caseYear(c) === year).map(auditCase)
+    const rows = cases.filter(c => auditYear(c) === year).map(auditCase)
       .sort((a,b) => (order(a.c) - order(b.c)) || caseWhen(a.c).localeCompare(caseWhen(b.c)));
     if (!rows.length) return `<div class="ad-empty">${year} 年還沒有任何專案</div>`;
     const S = auditSummary(rows), carried = carriedCases(year);
-    const prevRows = cases.filter(c => caseYear(c) === String(+year - 1)).map(auditCase), P = prevRows.length ? auditSummary(prevRows) : null;
+    const prevRows = cases.filter(c => auditYear(c) === String(+year - 1)).map(auditCase), P = prevRows.length ? auditSummary(prevRows) : null;
     const vsPrev = (cur, prev, fmt) => P && prev != null && cur != null ? `去年 ${fmt(prev)}` : '';
 
     // 1. 總評：等級＋三個大數字
@@ -2805,7 +2837,7 @@
       <div class="ad-grade g-${S.grade || 'B'}"><b>${S.grade || '—'}</b><span>年度總評${S.grade ? '・' + GRADE_TEXT[S.grade] : ''}</span></div>
       <div class="ad-kpis">
         <div class="ad-kpi"><div class="ad-kpi-l">確定合作</div><div class="ad-kpi-v">${S.won} 案</div><div class="ad-kpi-s">已完成 ${S.done}・進行中 ${S.won - S.done}（另有接洽中 ${S.talking}・終止 ${S.lost}）${P ? `<br>去年 ${P.won} 案` : ''}</div></div>
-        <div class="ad-kpi"><div class="ad-kpi-l">確定合作總金額（未稅）</div><div class="ad-kpi-v" style="color:#2E7D32">${money(S.wonNet)}</div><div class="ad-kpi-s">只算進行中＋已完成・含稅 ${money(S.wonGross)}${P ? `<br>去年 ${money(P.wonNet)}` : ''}${carried.length ? `<br>另有 ${carried.length} 案、${money(carried.reduce((s,c) => s + netQuote(c), 0))} 排在之後執行` : ''}</div></div>
+        <div class="ad-kpi"><div class="ad-kpi-l">確定合作總金額（未稅）</div><div class="ad-kpi-v" style="color:#2E7D32">${money(S.wonNet)}</div><div class="ad-kpi-s">只算進行中＋已完成・含稅 ${money(S.wonGross)}${P ? `<br>去年 ${money(P.wonNet)}` : ''}${carried.length ? `<br>其中 ${carried.length} 案、${money(carried.reduce((s,c) => s + netQuote(c), 0))} 排在之後執行` : ''}</div></div>
         <div class="ad-kpi"><div class="ad-kpi-l">平均日均收入</div><div class="ad-kpi-v" style="color:${S.avgDaily == null ? '#BBB' : S.avgDaily >= DAILY_GOOD ? '#2E7D32' : '#C62828'}">${S.avgDaily == null ? '—' : money(S.avgDaily)}</div><div class="ad-kpi-s">已完成案件，扣成本後${P && P.avgDaily != null ? `<br>去年 ${money(P.avgDaily)}` : ''}</div></div>
       </div>
     </div>`;
@@ -2886,7 +2918,7 @@
       const noteCell = forPrint ? `<td class="ad-note-p">${esc(note)}</td>`
         : `<td class="l" onclick="event.stopPropagation()"><input type="text" class="ad-note" placeholder="寫下檢討…" value="${esc(note).replace(/"/g,'&quot;')}" onblur="saveAuditNote('${c.id}',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"></td>`;
       return `<tr class="ad-row"${forPrint ? '' : ` onclick="adOpenCase('${c.id}')"`}>
-        <td class="l ad-name"><b>${esc(c.name)}</b><small>${c.client ? esc(c.client) + '・' : ''}${range(c)}</small>${r.memo ? `<div class="ad-memo${forPrint ? ' full' : ''}" title="${esc(r.memo).replace(/"/g,'&quot;')}">${esc(r.memo)}</div>` : ''}</td>
+        <td class="l ad-name"><b>${esc(c.name)}</b><small>${c.client ? esc(c.client) + '・' : ''}${range(c)}${caseYear(c) > year && c.status !== '終止' ? `・<span style="color:#6A4BB0">${caseYear(c)} 執行</span>` : ''}</small>${r.memo ? `<div class="ad-memo${forPrint ? ' full' : ''}" title="${esc(r.memo).replace(/"/g,'&quot;')}">${esc(r.memo)}</div>` : ''}</td>
         <td class="l"><span class="ad-st s-${c.status}">${c.status}</span></td>
         <td>${r.days ? r.days + ' 天' : '<span class="ad-est">—</span>'}</td>
         <td class="${r.alive ? '' : 'ad-est'}">${r.net ? money(r.net) : '<span class="ad-est">—</span>'}</td>
@@ -2914,16 +2946,8 @@
         ${groups}
       </table></div>` : '<div class="ad-empty">這個篩選沒有案件</div>'}</div>`;
 
-    const foot = `<div class="ad-foot">案件依結束日期歸年（沒有就看開始日期）。金額都是未稅（報價 ÷ 1.05），成本照填的數字扣。成交＝進行中或已完成、而且有收費；互惠、沒填報價、暫停、接洽中都不算成交。收款天數＝尾款收款日期 − 結束日期。</div>`;
-    const carriedHTML = !carried.length ? '' : `<div class="ad-sec"><div class="ad-sec-t">在手案件（${year} 接到、之後執行）</div>
-      <div class="ad-sec-d">這一年談下來、日期排到之後的案子。收入和日均算在執行的那一年，這裡不計入 ${year} 的金額；「接到」是看你在系統建立專案的日期。</div>
-      <div class="ad-scroll"><table class="ad-table">
-        <tr><th class="l">案件</th><th class="l">狀態</th><th class="l">執行日期</th><th>金額（未稅）</th></tr>
-        ${carried.map(c => `<tr class="ad-row"${forPrint ? '' : ` onclick="adOpenCase('${c.id}')"`}><td class="l ad-name"><b>${esc(c.name)}</b><small>${c.client ? esc(c.client) : ''}</small></td>
-          <td class="l"><span class="ad-st s-${c.status}">${c.status}</span></td><td class="l">${c.start_date || ''}${c.end_date && c.end_date !== c.start_date ? ' ～ ' + c.end_date : ''}</td><td>${netQuote(c) ? money(netQuote(c)) : '—'}</td></tr>`).join('')}
-        <tr class="ad-sub"><td class="l" colspan="3">合計 ${carried.length} 案（確定合作 ${carried.filter(c => ['進行中','已完成'].includes(c.status)).length} 案）</td><td>${money(carried.reduce((s,c) => s + netQuote(c), 0))}</td></tr>
-      </table></div></div>`;
-    return hero + metrics + catTable + carriedHTML + findHTML + ipHTML + caseTable + foot;
+    const foot = `<div class="ad-foot">案件依接案日期歸年（沒填就看建立專案那天或開始日期，取比較早的），所以今年接到、明年才執行的案子也算在今年；專案收入則照實際收款日期算。金額都是未稅（報價 ÷ 1.05），成本照填的數字扣。成交＝進行中或已完成、而且有收費；互惠、沒填報價、暫停、接洽中都不算成交。收款天數＝尾款收款日期 − 結束日期。</div>`;
+    return hero + metrics + catTable + findHTML + ipHTML + caseTable + foot;
   }
 
   // ── 發票資訊（存在 tasks 欄位裡的 type:'invoice'）──────
@@ -3290,8 +3314,6 @@
     list = list.filter(inViewYear).sort(byCaseNo);
     document.getElementById('client-list').innerHTML = [...new Set(cases.map(c=>(c.client||'').trim()).filter(Boolean))].sort().map(n=>`<option value="${esc(n).replace(/"/g,'&quot;')}">`).join('');
     updateBackupWarn();
-    const rcN = receivables().length;
-    document.getElementById('rc-count').textContent = rcN || '';
     let bar = '';
     if (missingOnly) {
       const miss = cases.filter(inViewYear).filter(isMissing);
@@ -3482,6 +3504,12 @@
           </div>
         </div>
         <div class="prop-row">
+          <div class="prop-label">接案日期</div>
+          <div class="prop-value" style="cursor:pointer" title="確定接下這個案子的那天，年度稽核依這個日期歸年" onclick="showSingleDatePicker(this,'${caseGotDate(c)}',v=>setMeta('got',v||''))">
+            ${caseMeta(c).got ? `<span class="prop-plain">${fmtDate(caseMeta(c).got)}</span>` : `<span style="color:#BBB">${caseCreatedDate(c) ? fmtDate(caseCreatedDate(c)) : '點擊設定'}</span>`}
+          </div>
+        </div>
+        <div class="prop-row">
           <div class="prop-label">報價</div>
           <div class="prop-value" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap">
             <span style="color:#AAA;flex-shrink:0">含稅</span><input class="prop-input" id="q-gross" style="flex-shrink:0;width:${moneyWidth(quoteText(c,'gross'))}" inputmode="numeric" placeholder="添加" value="${quoteText(c,'gross')}" onfocus="this.value=this.value.replace(/[$,]/g,'');this.style.width='96px'" onblur="saveQuote('gross',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
@@ -3513,14 +3541,14 @@
       <div class="section-hd">項目</div>
       <div class="task-tbl">
         <div class="task-head"><div class="task-th">名稱</div><div class="task-th task-th-st">狀態</div><div class="task-th task-th-note">備註</div><div class="task-th">日期</div></div>
-        ${taskRows||'<div class="empty" style="padding:12px 0">還沒有項目</div>'}
+        ${taskRows}
         <button class="btn-add-task" onclick="addTask()">＋ 新增</button>
       </div>
 
       <div class="section-hd">成本</div>
       <div class="task-tbl">
         <div class="task-head cost"><div class="task-th">名稱</div><div class="task-th">狀態</div><div class="task-th">花費</div><div class="task-th" title="花錢的日期，財務會算在這個月">支出日期</div></div>
-        ${costRows||'<div class="empty" style="padding:12px 0">還沒有成本</div>'}
+        ${costRows}
         <button class="btn-add-task" onclick="addCost()">＋ 新增</button>
         ${costs.length?`<div class="cost-total">${costTotalHTML(c)}</div>`:''}
       </div>
