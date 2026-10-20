@@ -842,19 +842,142 @@
       .ip-block { break-inside: avoid; }
       .ad-table tr { break-inside: avoid; }
     }
+    /* ── 廠商名單：自己一頁（body.ven-mode），不動專案、財務的版面 ── */
+    .ven-wrap { display: none; max-width: 1400px; margin: 0 auto; padding: 68px 28px 80px; box-sizing: border-box; }
+    body.ven-mode .ven-wrap { display: block; }
+    body.ven-mode #app-wrap, body.ven-mode .fin-wrap, body.ven-mode .proj-only, body.ven-mode .fin-only, body.ven-mode #undo-btn, body.ven-mode #fin-undo, body.ven-mode .year-select { display: none !important; }
+    body:not(.ven-mode) .ven-only { display: none !important; }
+    /* 名冊：電腦每個分類一欄、往下排；每張卡片同樣大小，只有店名＋一行小字 */
+    .ven-cols { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(158px, 1fr); gap: 12px; overflow-x: auto; padding-bottom: 8px; align-items: start; }
+    .ven-col-t { font-size: 1rem; font-weight: 700; margin: 0 0 10px 2px; white-space: nowrap; }
+    .ven-col-t small, .ven-acc-t small { font-weight: 500; color: #AAA; font-size: 0.85em; margin-left: 6px; }
+    .ven-list { display: flex; flex-direction: column; gap: 7px; }
+    .vc { height: 58px; box-sizing: border-box; background: white; border: 1px solid #E2E1DC; border-radius: 10px; padding: 9px 12px; cursor: pointer; display: flex; flex-direction: column; justify-content: center; min-width: 0; transition: border-color 0.12s, box-shadow 0.12s; }
+    .vc:hover { border-color: #BDBDB8; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .vc-top { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .vc-top b { font-size: 0.86rem; font-weight: 600; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vc-sub { font-size: 0.7rem; color: #9A9A9A; margin-top: 3px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vc-n { font-size: 0.62rem; padding: 1px 7px; border-radius: 9px; white-space: nowrap; flex-shrink: 0; font-weight: 600; }
+    .vc-n.n1 { color: #2E7D32; background: #E6F4E7; }
+    .vc-n.n3 { color: #C25E00; background: #FFEBD6; }
+    .vc-n.n6 { color: #C62828; background: #FDE2E2; }
+    .vc-add { height: 38px; border: 1px dashed #DDDCD7; border-radius: 10px; background: none; color: #BBB; font-size: 0.75rem; cursor: pointer; font-family: inherit; }
+    .vc-add:hover { color: #555; border-color: #BBB; }
+    /* 手機：分類一行一行，點開才列出店家 */
+    .ven-acc { border-bottom: 1px solid #E2E1DC; }
+    .ven-acc-t { display: flex; align-items: center; justify-content: space-between; font-size: 1.05rem; font-weight: 700; padding: 15px 2px; cursor: pointer; user-select: none; }
+    .ven-acc-t i { font-style: normal; color: #BBB; font-size: 0.8rem; transition: transform 0.15s; }
+    .ven-acc.open .ven-acc-t i { transform: rotate(90deg); }
+    .ven-acc .ven-list { display: none; padding: 0 0 14px; }
+    .ven-acc.open .ven-list { display: flex; }
+    .ven-empty { text-align: center; color: #BBB; padding: 50px 0; font-size: 0.85rem; }
+    .ven-banner { background: #FFF8E1; border: 1px solid #FFE08A; color: #8A6D00; border-radius: 12px; padding: 10px 14px; font-size: 0.78rem; margin-bottom: 14px; line-height: 1.6; }
+    /* 廠商資料視窗 */
+    #vd-modal .modal-sheet { max-width: 720px; }
+    .vd-name { font-size: 1.05rem !important; font-weight: 700; border-color: transparent !important; padding-left: 4px !important; }
+    .vd-name:hover { border-color: #E5E5E5 !important; }
+    .vd-name:focus { border-color: #999 !important; }
+    .vd-row { display: flex; gap: 6px; align-items: center; }
+    .vd-row input { flex: 1; min-width: 0; }
+    .vd-act { flex-shrink: 0; width: 34px; height: 34px; border-radius: 8px; border: 1px solid #E5E5E5; background: white; color: #777; display: flex; align-items: center; justify-content: center; cursor: pointer; text-decoration: none; font-size: 0.8rem; }
+    .vd-act:hover { background: #F7F6F3; color: #1C1C1C; }
+    .vd-act.off { opacity: 0.3; pointer-events: none; }
+    .vd-people { border: 1px solid #EEEDE8; border-radius: 12px; overflow: hidden; margin-bottom: 11px; }
+    .vd-ph, .vd-pr { display: grid; grid-template-columns: 1fr 0.9fr 1.1fr 1.5fr 30px; gap: 6px; align-items: center; padding: 6px 8px; }
+    .vd-ph { background: #F7F6F3; font-size: 0.66rem; color: #AAA; padding-top: 7px; padding-bottom: 7px; }
+    .vd-pr { border-top: 1px solid #F3F3F0; }
+    .vd-pr input { padding: 6px 8px !important; font-size: 0.78rem !important; border-color: transparent !important; }
+    .vd-pr input:hover { border-color: #E5E5E5 !important; }
+    .vd-pr input:focus { border-color: #999 !important; }
+    #vd-modal input::placeholder, #vd-modal textarea::placeholder { color: #CCC; opacity: 1; }
+    .vv-hd { display: flex; justify-content: flex-end; margin: -6px -4px 4px; }
+    .vv-hd-btns { display: flex; align-items: center; gap: 10px; }
+    .vv-edit { border: 1px solid #E2E1DC; background: white; border-radius: 8px; padding: 5px 14px; font-size: 0.78rem; font-weight: 600; cursor: pointer; font-family: inherit; color: #1C1C1C; }
+    .vv-edit.on { background: #1C1C1C; border-color: #1C1C1C; color: white; }
+    .vv-name { font-size: 1.35rem; font-weight: 700; line-height: 1.3; }
+    .vv-sub { font-size: 0.8rem; color: #999; margin-top: 4px; }
+    .vv-t { font-size: 0.72rem; font-weight: 600; color: #AAA; margin: 18px 0 7px 2px; }
+    .vv-t small { font-weight: 400; color: #BBB; margin-left: 4px; }
+    .vv-box { border: 1px solid #EEEDE8; border-radius: 12px; overflow: hidden; background: white; }
+    .vv-person { padding: 11px 14px; border-top: 1px solid #F2F2EF; display: flex; flex-direction: column; gap: 3px; }
+    .vv-person:first-child { border-top: none; }
+    .vv-pn { font-size: 0.88rem; font-weight: 600; display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+    .vv-line { display: inline-flex; align-items: center; gap: 3px; background: #06C755; color: white; font-size: 0.68rem; font-weight: 700; padding: 4px 9px 4px 6px; border-radius: 14px; text-decoration: none; flex-shrink: 0; }
+    .vv-line:hover { background: #05B04B; }
+    .ve-person .ve-line { grid-column: 1 / 3; display: flex; align-items: center; gap: 6px; padding-left: 8px; }
+    .ve-line b { background: #06C755; color: white; font-size: 0.6rem; padding: 2px 6px; border-radius: 8px; flex-shrink: 0; }
+    .ve-line input { flex: 1; min-width: 0; }
+    .vv-pn small { font-weight: 400; color: #999; font-size: 0.74rem; margin-left: 8px; }
+    .vv-link { color: #1a73e8; text-decoration: none; font-size: 0.84rem; word-break: break-all; }
+    .vv-link small { color: #BBB; font-size: 0.7rem; margin-left: 4px; }
+    .vv-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; padding: 10px 14px; border-top: 1px solid #F2F2EF; font-size: 0.84rem; align-items: baseline; }
+    .vv-row:first-child { border-top: none; }
+    .vv-row > span { color: #999; font-size: 0.76rem; }
+    .vv-note { padding: 11px 14px; font-size: 0.84rem; line-height: 1.65; white-space: pre-wrap; color: #333; }
+    .ve-box .ve-row, .ve-row { display: grid; grid-template-columns: 56px 1fr; gap: 10px; align-items: center; padding: 4px 6px 4px 14px; border-top: 1px solid #F2F2EF; }
+    .ve-box .ve-row:first-child { border-top: none; }
+    .ve-row > span { color: #999; font-size: 0.76rem; }
+    .ve-row input, .ve-row select { border-color: transparent !important; padding: 7px 8px !important; }
+    .ve-row input:hover, .ve-row select:hover { border-color: #EEE !important; }
+    .ve-row input:focus, .ve-row select:focus { border-color: #999 !important; }
+    .ve-person { display: grid; grid-template-columns: 1fr 1fr 28px; gap: 2px 6px; padding: 8px 8px 8px 10px; border-top: 1px solid #F2F2EF; }
+    .ve-person:first-child { border-top: none; }
+    .ve-person input { border-color: transparent !important; padding: 6px 8px !important; font-size: 0.8rem !important; }
+    .ve-person input:hover { border-color: #EEE !important; }
+    .ve-person input:focus { border-color: #999 !important; }
+    .ve-person .vd-pdel { grid-row: 1; grid-column: 3; }
+    .ve-note { min-height: 80px; }
+    #vd-modal .vd-name { width: 100%; margin-bottom: 12px; }
+    .vd-pdel { background: none; border: none; color: #CCC; cursor: pointer; font-size: 0.8rem; }
+    .vd-pdel:hover { color: #E53935; }
+    .vd-padd { display: block; width: 100%; text-align: left; padding: 8px 14px; font-size: 0.75rem; color: #AAA; background: none; border: none; border-top: 1px solid #F3F3F0; cursor: pointer; font-family: inherit; }
+    .vd-padd:hover { color: #555; }
+    .vd-cases { border: 1px solid #EEEDE8; border-radius: 12px; overflow: hidden; margin-bottom: 11px; }
+    .vd-case { display: flex; gap: 10px; align-items: center; padding: 9px 12px; border-top: 1px solid #F3F3F0; cursor: pointer; font-size: 0.8rem; }
+    .vd-case:first-child { border-top: none; }
+    .vd-case:hover { background: #FAFAF8; }
+    .vd-case span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .vd-case small { color: #AAA; white-space: nowrap; }
+    .vd-case b { font-weight: 600; white-space: nowrap; }
+    .vd-none { font-size: 0.75rem; color: #BBB; padding: 10px 12px; }
+    .vd-foot { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; font-size: 0.7rem; color: #BBB; }
+    @media (max-width: 640px) {
+      .ven-wrap { padding: 64px 12px 80px; }
+      .vd-ph { display: none; }
+      .vd-pr { grid-template-columns: 1fr 1fr 30px; }
+      .vd-pr input:nth-child(3), .vd-pr input:nth-child(4) { grid-column: span 1; }
+      .vd-pr .vd-pdel { grid-row: 1; grid-column: 3; }
+      /* 多了「廠商」分頁，手機標題列每一顆再縮一點，375px 寬也放得下 */
+      .view-sep { margin: 0 6px; }
+      .app-header { gap: 6px; }
+      .app-header .year-select { padding: 0 7px; }
+      .app-header .btn-more { padding: 0 9px; }
+      .app-header .search-box { width: 44px; padding: 0 8px; }
+      .app-header .ven-only.search-box { width: 44px; flex: none; }
+      /* 廠商頁打字搜尋時：另外兩個分頁先收起來，搜尋框撐滿剩下的寬度 */
+      .app-header:has(#ven-q:focus) .view-tab:not(.on), .app-header:has(#ven-q:focus) .view-sep,
+      .app-header:has(#ven-q:not(:placeholder-shown)) .view-tab:not(.on), .app-header:has(#ven-q:not(:placeholder-shown)) .view-sep { display: none; }
+      .app-header:has(#ven-q:focus) > div:last-child, .app-header:has(#ven-q:not(:placeholder-shown)) > div:last-child { flex: 1; min-width: 0; }
+      .app-header .ven-only.search-box:focus, .app-header .ven-only.search-box:not(:placeholder-shown) { flex: 1; width: auto; min-width: 0; }
+    }
+    @media (max-width: 370px) {
+      .app-header { padding: 0 10px; gap: 5px; }
+      .view-sep { margin: 0 5px; }
+    }
   </style>
 </head>
 <body>
 
 <div class="app-header">
   <div class="header-left">
-    <span class="app-title"><span class="view-tab on" id="tab-proj" onclick="setView('proj')">專案</span><span class="view-sep"></span><span class="view-tab" id="tab-fin" onclick="setView('fin')">財務</span></span>
+    <span class="app-title"><span class="view-tab on" id="tab-proj" onclick="setView('proj')">專案</span><span class="view-sep"></span><span class="view-tab" id="tab-fin" onclick="setView('fin')">財務</span><span class="view-sep"></span><span class="view-tab" id="tab-ven" onclick="setView('ven')">廠商</span></span>
     <div class="sync-dot loading" id="sync-dot"></div>
     <span class="lock-hint" id="lock-hint" style="display:none" onclick="showToast('資料庫還沒上鎖：任何人拿到網址都看得到資料')">未上鎖</span>
   </div>
   <div style="display:flex;align-items:center;gap:6px;min-width:0">
     <button class="btn-year year-select" id="year-select" title="年度" onclick="event.stopPropagation();openYearMenu(this)"></button>
     <input class="proj-only search-box" type="text" id="search-input" placeholder="搜尋" oninput="renderAll()">
+    <input class="ven-only search-box" type="text" id="ven-q" placeholder="搜尋" oninput="renderVendors()">
     <button class="btn-year" id="undo-btn" style="display:none" title="復原上一步（⌘Z）" onclick="undoLast()">↩ 復原</button>
     <button class="btn-year" id="fin-undo" style="display:none" title="復原上一步（⌘Z）" onclick="finUndo()">↩ 復原</button>
     <button class="btn-year fin-only" onclick="event.stopPropagation();openFinExportMenu(this)">匯出 ▾</button>
@@ -865,10 +988,12 @@
     <button class="btn-year proj-only" onclick="openCalendar()">時程</button>
     <button class="btn-year btn-more" onclick="event.stopPropagation();openMoreMenu(this)" title="更多">⋯</button>
     <button class="proj-only btn-new" onclick="openModal()" title="新增專案">＋<span class="hide-m"> 新增專案</span></button>
+    <button class="ven-only btn-new" onclick="newVendor()" title="新增廠商">＋<span class="hide-m"> 新增廠商</span></button>
   </div>
 </div>
 
 <div class="fin-wrap" id="fin-wrap"></div>
+<div class="ven-wrap" id="ven-wrap"></div>
 
 <div class="app-wrap" id="app-wrap">
   <div class="list-col">
@@ -1009,6 +1134,12 @@
   </div>
 </div>
 
+<div class="modal-overlay" id="vd-modal" onclick="if(event.target===this)closeVendor()">
+  <div class="modal-sheet">
+    <div id="vd-body"></div>
+  </div>
+</div>
+
 <div id="login-ov">
   <div class="login-card">
     <div class="login-ttl">專案管理</div>
@@ -1104,7 +1235,8 @@
     session = null; updateLockHint();
     if (dbOpen) { showToast('已登出'); return; }
     // 資料庫已上鎖：登出就清掉這台裝置上的暫存
-    try { localStorage.removeItem('boyu_cases'); } catch(e) {}
+    try { localStorage.removeItem('boyu_cases'); localStorage.removeItem('boyu_vendors'); } catch(e) {}
+    ven.list = []; ven.loaded = false; ven.cloud = false;
     cases = []; viewingId = null; document.getElementById('app-wrap').classList.remove('open');
     renderAll(); showLogin();
   }
@@ -1173,6 +1305,7 @@
     const t = e.target;
     if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return; // 正在打字時，讓瀏覽器自己復原文字
     if (document.querySelector('.modal-overlay.open')) return;
+    if (view === 'ven') return;
     e.preventDefault(); if (view === 'fin') finUndo(); else undoLast();
   });
   function setSyncDot(s) { document.getElementById('sync-dot').className = 'sync-dot '+s; }
@@ -1626,6 +1759,13 @@
   function openMoreMenu(anchor) {
     const items = [];
     if (window.innerWidth <= 640) items.push({value:'rc',cls:'',label:"待收付款"},{value:'year',cls:'',label:'專案收入'},{value:'audit',cls:'',label:'年度稽核'},{value:'cal',cls:'',label:'時程'},{sep:true});
+    if (view === 'ven') {
+      const acts = [{value:'backup',cls:backupOverdue()?'dd-warn':'',label:backupLabel()}];
+      if (db && session) acts.push({sep:true},{value:'logout',cls:'',label:'登出'});
+      else if (db && dbOpen) acts.push({sep:true},{value:'login',cls:'',label:'登入'});
+      showInlineDD(anchor, acts, v => ({ logout: doLogout, login: () => showLogin(true), backup: exportBackup })[v]());
+      return;
+    }
     if (view === 'fin') {
       const acts = [];
       if (window.innerWidth <= 640) {
@@ -1651,11 +1791,11 @@
 
   // ── 匯出備份：把全部專案（含項目、成本、發票資訊）下載成一個檔案 ──
   async function exportBackup() {
-    await loadFinance();
+    await loadFinance(); await loadVendors();
     if (!cases.length && !Object.keys(fin.years).length) { showToast('目前沒有資料可以備份'); return; }
     const d = new Date(), pad = n => String(n).padStart(2,'0');
     const stamp = `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
-    const blob = new Blob([JSON.stringify({ exported_at: d.toISOString(), count: cases.length, cases, finance: fin.years }, null, 2)], { type: 'application/json' });
+    const blob = new Blob([JSON.stringify({ exported_at: d.toISOString(), count: cases.length, cases, finance: fin.years, vendors: ven.list.filter(v => !v._new) }, null, 2)], { type: 'application/json' });
     const a = document.createElement('a');
     a.href = URL.createObjectURL(blob); a.download = `專案管理備份-${stamp}.json`;
     document.body.appendChild(a); a.click(); a.remove();
@@ -3187,13 +3327,283 @@
     try { const { error } = await db.from('finance').upsert({ year: y, data: d, updated_at: new Date().toISOString() }); setSyncDot(error ? 'err' : 'ok'); if (error) showToast('⚠ 雲端同步失敗：' + error.message); }
     catch (e) { setSyncDot('err'); }
   }
+  // ── 廠商名單：合作的廠商、公關公司、客戶窗口。跟專案、財務分開存（Supabase 的 vendors 資料表，一家一列）──
+  // 資料表還沒建立時先存在這台裝置；示範模式不存。專案、財務的資料完全不會被這裡改到
+  const venDemo = () => typeof _demo !== 'undefined' && _demo; // 正式版沒有示範模式
+  const VEN_CATS = ['公關公司','客戶窗口','印刷','裱框','空間工程','攝影團隊','其他'];
+  const ven = { loaded: false, cloud: false, list: [], open: new Set(), editing: null };
+  const venId = () => 'v' + Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  const P = (name, role, phone, email, line) => ({ name, role: role || '', phone: phone || '', email: email || '', line: line || '' });
+  // LINE：用 LINE ID 打開對方的個人頁（LINE 沒有直接進對話框的連結，進去後再按「聊天」）
+  const lineHref = id => 'https://line.me/R/ti/p/~' + encodeURIComponent(String(id || '').trim().replace(/^@?~?/, ''));
+  // 手機：交給 LINE App 打開對方頁面；電腦：瀏覽器只會開到 LINE 的 QR Code 說明頁，所以改成複製 LINE ID，到電腦版 LINE 搜尋
+  const venIsPhone = () => /iPhone|iPad|iPod|Android/i.test(navigator.userAgent) || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent));
+  function venLine(id, ev) {
+    if (venIsPhone()) return true;
+    ev.preventDefault();
+    copyText(String(id).trim(), ` LINE ID「${String(id).trim()}」，到電腦版 LINE 的搜尋貼上就找得到`);
+    return false;
+  }
+  const LINE_ICON = '<svg viewBox="0 0 24 24" width="15" height="15" aria-hidden="true"><path fill="#fff" d="M12 4.2c-4.7 0-8.5 3.1-8.5 6.9 0 3.4 3 6.3 7.1 6.8.3.1.6.2.7.4.1.2.1.5 0 .7l-.1.7c0 .2-.2.8.7.4s4.8-2.8 6.5-4.8c1.2-1.3 1.7-2.6 1.7-4.2 0-3.8-3.8-6.9-8.6-6.9z"/></svg>';
+  // 預設名單：Notion 廠商清單＋工作信箱裡找到的窗口（id 固定，兩台裝置同時第一次打開也不會重複）
+  const VEN_SEED = [
+    { id:'seed-pr-ruimei', cat:'公關公司', name:'瑞美公關', alias:'瑞美, 瑞美國際整合行銷', company:'瑞美國際整合行銷有限公司', tax:'90707941', phone:'02-7733-7708', addr:'新北市板橋區四川路二段16巷10號9樓',
+      people:[P('傅宣瑋 Crystal','專案企劃','0968-362-480','crystal76@ruimeiimc.com','cr332266'), P('Angela Han','','','angela.han@ruimeiimc.com')],
+      note:'同組常 CC：rayjing6、smallfaye、meganlu（@ruimeiimc.com）\n星巴克 2027 新年禮盒、創作影片拍攝都是透過瑞美。' },
+    { id:'seed-pr-justmake', cat:'公關公司', name:'正好公關', alias:'正好, Just-Make', company:'Just-Make IMC Co.', phone:'02-6613-0788 #226', addr:'台北市大安區敦化南路二段77號19樓之2',
+      people:[P('Trista Huang','','0961-175-175','trista@just-make.com.tw')], note:'2026/2 金融品牌發布會（台北嘉佩樂）現場揮毫洽詢；保誠人壽現場揮毫；星巴克案的介紹人。' },
+    { id:'seed-pr-zhongyi', cat:'公關公司', name:'仲誼公關', alias:'仲誼', note:'法國珠寶品牌禮品（試寫）。工作信箱裡沒找到往來信件，窗口資料待補。' },
+    { id:'seed-pr-bon', cat:'公關公司', name:'淬萃整合行銷 BON!', alias:'淬萃, BON!, 精英公關', company:'淬萃整合行銷股份有限公司（精英公關集團）', phone:'02-8768-1186 #130', addr:'台北市信義區東興路41號11樓',
+      people:[P('王昱安 Anna','Team Assistant','0966-613-147','anna@boncc.com.tw'), P('Iris','','','iris@boncc.com.tw')], note:'2026/9 smith+hsu 當代茶品牌試營運活動邀約。' },
+    { id:'seed-pr-projectasia', cat:'公關公司', name:'好好玩創意 Project Asia Creative', alias:'好好玩, Project Asia', company:'好好玩創意有限公司', tax:'90770388', addr:'台北市信義區基隆路一段432號4樓之2',
+      people:[P('李念庭 Tina Lee','專案監督','0972-852-048','tina.lee@projectasiacreative.com')], note:'THE NORTH FACE 外部公關，2026/8 FW26 UE 黑標貼文合作邀約。CC：kristine.wu、shan.hung。' },
+    { id:'seed-cl-tatler', cat:'客戶窗口', name:'Tatler Asia Taiwan', alias:'Tatler, 乾唐軒', company:'香港商台灣博施股份有限公司台灣分公司', tax:'28433767', phone:'02-3707-3923', addr:'台北市大安區光復南路630號3樓',
+      people:[P('Jin Lai','Brand Marketing Specialist','0905-143-339','jin.lai@tatlerasia.com')], note:'Tatler Club 閒工夫（寶元紀、BMW、渣打）。CC：ace.lin、phoebe.yang（@tatlerasia.com）。' },
+    { id:'seed-cl-skm', cat:'客戶窗口', name:'新光三越', alias:'新光三越, SKM', company:'新光三越百貨(股)公司 台北信義分公司', tax:'27922534', phone:'02-8780-1000', addr:'台北市信義區松壽路11號6樓',
+      people:[P('張皓婷 Elsa','A11 行銷視覺設計','02-8780-1000 #6767','haoting.chang@skm.com.tw'), P('李建澤','信義四館 行銷（發票收件人）','02-8780-1000 #1000',''), P('台中中港店','','','anchu.hsu@skm.com.tw')],
+      note:'春節題字：外牆對聯由 Elsa 負責；春節視覺題字、春聯由另一位窗口趙小姐對接。' },
+    { id:'seed-cl-stylemaster', cat:'客戶窗口', name:'Style Master', alias:'Style Master, MCM, 資生堂', company:'MCM好友文化媒體整合股份有限公司', phone:'02-2769-1218 #36', addr:'台北市松山區民生東路五段36巷8弄40號1樓',
+      people:[P('陳厚佐 Neo','整合行銷主任','0978-806-093','neo@mcmsm.com.tw','chenhouzuo')], note:'2026/9 日系高奢髮品證言合作。' },
+    { id:'seed-cl-yow', cat:'客戶窗口', name:'YOW!design 唷吼設計', alias:'YOW', phone:'02-2720-7380 #822', addr:'台北市信義區信義路五段150巷2號1305',
+      people:[P('Vicky Lu','Project Director','0921-690-675','vicky@yowdesign.com')], note:'動畫電影片名題字，2026/10 客戶暫緩，待後期重啟。由 Chris 推薦。' },
+    { id:'seed-cl-vogue', cat:'客戶窗口', name:'VOGUE Taiwan', alias:'VOGUE, Condé Nast', company:'Condé Nast 台灣', phone:'02-2732-8899', addr:'台北市信義區基隆路二段51號15樓',
+      people:[P('林芸碩 Ophelia','專案執行專員','0975-185-747','ophelia.lin@condenast.com.tw','0975185747')], note:'2026 VOGUE 風格野餐日。WhatsApp：0975185747' },
+    { id:'seed-cl-w', cat:'客戶窗口', name:'W Taipei 台北W飯店', alias:'W Hotel, W Taipei', phone:'02-7703-8892', addr:'台北市信義區忠孝東路五段10號',
+      people:[P('黃定甫 Brian','電子商務與數位行銷副理','0910-098-138','Brian.Huang@whotels.com','f25gp88a')], note:'2026 Stand for Love 藝術展邀約（紫艷中餐廳）。' },
+    { id:'seed-cl-boring', cat:'客戶窗口', name:'Boring Design', alias:'Boring', company:'無聊設計實驗有限公司', tax:'90489683', addr:'台北市中正區羅斯福路三段2號17樓',
+      people:[P('黃浩','','0930-579-685','hao@boring-lab.com'), P('Tizzy Chen','','','tizzy.chen@boring-lab.com')], note:'2027 羊年月曆、紅包專案。' },
+    { id:'seed-cl-piaget', cat:'客戶窗口', name:'PIAGET 伯爵', alias:'PIAGET', people:[P('Allen Lee','','','allen-ch.lee@piaget.com'), P('Jamie Liu','','','jamie-ec.liu@piaget.com')] },
+    { id:'seed-pr-yangge', cat:'印刷', name:'漾格科技股份有限公司', alias:'漾格', tax:'28728903', phone:'02-2223-5728', addr:'新北市中和區建康路3號', people:[P('小花')] },
+    { id:'seed-pr-chengcai', cat:'印刷', name:'承彩企業有限公司', alias:'承彩', tax:'29147833', phone:'02-2225-7989', addr:'臺北市中山區南京東路2段36號7', people:[P('歐寶')], note:'地址後段在 Notion 被截斷，待補。' },
+    { id:'seed-pr-jingdian', cat:'印刷', name:'經典數位印刷', alias:'經典數位' },
+    { id:'seed-pr-shangge', cat:'印刷', name:'上格印刷（台中）', alias:'上格', phone:'04-2317-1133', addr:'台中市西屯區甘河路43號3樓', tags:'紅包印製' },
+    { id:'seed-fr-jinhua', cat:'裱框', name:'錦華堂藝術裱褙', alias:'錦華堂', phone:'02-2704-0088 / 0933-278-555', email:'jinhuahall@gmail.com', addr:'台北市信義區信義路三段73巷6之1號', tags:'台北當代、修復、日本錦緞', note:'全名在 Notion 被截斷，請確認。' },
+    { id:'seed-fr-taigu', cat:'裱框', name:'太古齋', phone:'02-2702-3371 / 0935-928-823', email:'taigu168@gmail.com', addr:'台北市大安區信義路四段58-2號', tags:'橫山書法、手工書' },
+    { id:'seed-fr-qingyu', cat:'裱框', name:'青雨山房', phone:'02-2748-1336', email:'wuwei124628@gmail.com', addr:'台北市松山區八德路四段168號4樓', tags:'太古齋出來、現代、宣和裱' },
+    { id:'seed-fr-zaixin', cat:'裱框', name:'在信堂', phone:'0922-849-506', email:'ren19820112@gmail.com', addr:'台北市中正區南昌路二段57號2樓', tags:'個人工作室、緣筆書道' },
+    { id:'seed-fr-boyi', cat:'裱框', name:'柏宜山房', phone:'02-2742-2118', email:'kuowenhsuan@gmail.com', addr:'台北市松山區八德路四段184號3樓', tags:'王意淳御用、年輕人' },
+    { id:'seed-fr-huiwen', cat:'裱框', name:'蕙文堂', phone:'02-2240-4159 / 0936-920-400', email:'f0635.tw@yahoo.com.tw', addr:'新北市中和區福祥路2號', tags:'老闆熱心' },
+    { id:'seed-sp-wole', cat:'空間工程', name:'沃樂居室內裝潢', alias:'沃樂居', tax:'91397509', phone:'02-2223-5728', addr:'新北市中和區建康路3號', people:[P('麒任')], note:'全名在 Notion 被截斷。電話、地址跟漾格科技一模一樣，可能是複製時沒改到，請確認。' },
+    { id:'seed-sp-yama', cat:'空間工程', name:'亞馬燈條', people:[P('陳佳緯')] },
+    { id:'seed-sp-baoyi', cat:'空間工程', name:'寶藝招牌', people:[P('Paul','業務')] },
+    { id:'seed-ph-bolin', cat:'攝影團隊', name:'柏麟', tags:'人像' },
+    { id:'seed-ph-jidian', cat:'攝影團隊', name:'機電社', tags:'平面攝影', addr:'台北市內湖區新明路', note:'名稱在 Notion 被截斷（機電社（賀…），地址也只有前段，待補。' },
+    { id:'seed-ph-egg', cat:'攝影團隊', name:'EGG', tags:'平面攝影' },
+  ];
+  const venClone = v => JSON.parse(JSON.stringify(v));
+  async function loadVendors() {
+    if (ven.loaded) return;
+    if (venDemo() || !db) { ven.list = VEN_SEED.map(venClone); ven.loaded = true; return; }
+    let local = null;
+    try { const r = localStorage.getItem('boyu_vendors'); if (r) local = JSON.parse(r); } catch (e) {}
+    if (!session && !dbOpen) { ven.list = local || []; return; } // 還沒登入：登入後再讀雲端
+    ven.loaded = true;
+    try {
+      const { data, error } = await db.from('vendors').select('*');
+      if (error) { ven.list = local || VEN_SEED.map(venClone); return; } // 資料表還沒建立：先用這台裝置上的
+      ven.cloud = true;
+      if (data.length) ven.list = data.map(r => r.data);
+      else { // 雲端還是空的：把這台裝置上的（或預設名單）傳上去
+        ven.list = local || VEN_SEED.map(venClone);
+        setSyncDot('loading');
+        const { error: e2 } = await db.from('vendors').upsert(ven.list.map(v => ({ id: v.id, data: v, updated_at: new Date().toISOString() })));
+        setSyncDot(e2 ? 'err' : 'ok');
+      }
+      try { localStorage.setItem('boyu_vendors', JSON.stringify(ven.list)); } catch (e) {}
+    } catch (e) { ven.list = local || VEN_SEED.map(venClone); }
+  }
+  async function venSave(v) {
+    v.updated = new Date().toISOString();
+    if (venDemo()) return;
+    try { localStorage.setItem('boyu_vendors', JSON.stringify(ven.list)); } catch (e) {}
+    if (!db || !session || !ven.cloud) return;
+    setSyncDot('loading');
+    try { const { error } = await db.from('vendors').upsert({ id: v.id, data: v, updated_at: v.updated }); setSyncDot(error ? 'err' : 'ok'); if (error) showToast('⚠ 雲端同步失敗：' + error.message); }
+    catch (e) { setSyncDot('err'); }
+  }
+  async function venRemove(id) {
+    ven.list = ven.list.filter(v => v.id !== id);
+    if (venDemo()) return;
+    try { localStorage.setItem('boyu_vendors', JSON.stringify(ven.list)); } catch (e) {}
+    if (!db || !session || !ven.cloud) return;
+    setSyncDot('loading');
+    try { const { error } = await db.from('vendors').delete().eq('id', id); setSyncDot(error ? 'err' : 'ok'); } catch (e) { setSyncDot('err'); }
+  }
+  // 合作紀錄：客戶名稱、專案名稱、發票抬頭或成本項目裡出現這家廠商的名字（或比對關鍵字），就算有合作
+  function venKeys(v) { return [v.name, v.company, ...String(v.alias || '').split(/[,，、]/)].map(s => String(s || '').trim().toLowerCase()).filter(s => s.length >= 2); }
+  function venCases(v) {
+    const keys = venKeys(v); if (!keys.length) return [];
+    return cases.filter(c => {
+      const hay = [c.client, c.name, caseInvoice(c).header, ...caseCosts(c).map(t => t.name)].join('｜').toLowerCase();
+      return keys.some(k => hay.includes(k));
+    }).sort((a, b) => caseWhen(b).localeCompare(caseWhen(a)));
+  }
+  function venSearchText(v) { return [v.name, v.company, v.alias, v.cat, v.phone, v.email, v.tax, v.addr, v.tags, v.note, ...(v.people || []).flatMap(p => [p.name, p.role, p.phone, p.email, p.line])].join(' ').toLowerCase(); }
+  const telHref = s => 'tel:' + String(s || '').split(/[\/／,，]/)[0].replace(/#.*/, '').replace(/[^\d+]/g, '');
+  // 卡片：店名＋一行小字（有特色寫特色，沒有就列窗口）；合作 1–2 案綠、3–5 案橘、6 案以上紅
+  function venCard(v) {
+    const n = venCases(v).length, lv = n >= 6 ? 'n6' : n >= 3 ? 'n3' : 'n1';
+    const who = (v.people || []).map(p => p.name).filter(Boolean).join('、');
+    const sub = v.tags || who || v.phone || v.addr || '';
+    return `<div class="vc" onclick="openVendor('${v.id}')" title="${esc(v.name).replace(/"/g,'&quot;')}">
+      <div class="vc-top"><b>${esc(v.name || '未命名')}</b>${n ? `<span class="vc-n ${lv}">合作 ${n} 案</span>` : ''}</div>
+      <div class="vc-sub">${esc(sub) || '&nbsp;'}</div></div>`;
+  }
+  const venMobile = () => window.innerWidth <= 640;
+  { let w = window.innerWidth, t; window.addEventListener('resize', () => { clearTimeout(t); t = setTimeout(() => { if (view === 'ven' && (w <= 640) !== venMobile()) renderVendors(); w = window.innerWidth; }, 150); }); }
+  function venToggle(k) { ven.open.has(k) ? ven.open.delete(k) : ven.open.add(k); renderVendors(); }
+  function renderVendors() {
+    const wrap = document.getElementById('ven-wrap'); if (!wrap) return;
+    const q = (document.getElementById('ven-q')?.value || '').trim().toLowerCase();
+    const byName = (a, b) => strokeOrder.compare(a.name || '', b.name || '');
+    const hit = ven.list.filter(v => !q || venSearchText(v).includes(q));
+    const inCat = k => hit.filter(v => v.cat === k || (k === '其他' && !VEN_CATS.includes(v.cat))).sort(byName);
+    const cats = VEN_CATS.filter(k => k !== '其他' || ven.list.some(v => v.cat === '其他' || !VEN_CATS.includes(v.cat)));
+    const banner = !venDemo() && db && !ven.cloud && ven.loaded
+      ? `<div class="ven-banner">廠商資料表還沒建立，目前只存在這台裝置上，其他裝置看不到。照我給的步驟在 Supabase 建好資料表後，重新整理就會自動上傳。</div>` : '';
+    let body;
+    if (venMobile()) {
+      body = cats.map(k => { const list = inCat(k); if (q && !list.length) return '';
+        const open = q ? true : ven.open.has(k);
+        return `<div class="ven-acc${open ? ' open' : ''}"><div class="ven-acc-t" onclick="venToggle('${k}')"><span>${k}<small>${list.length}</small></span><i>›</i></div>
+          <div class="ven-list">${list.map(venCard).join('')}<button type="button" class="vc-add" onclick="newVendor('${k}')">＋ 新增${k}</button></div></div>`; }).join('');
+    } else {
+      body = `<div class="ven-cols">${cats.map(k => { const list = inCat(k); if (q && !list.length) return '';
+        return `<div class="ven-col"><div class="ven-col-t">${k}<small>${list.length}</small></div><div class="ven-list">${list.map(venCard).join('')}${q ? '' : `<button type="button" class="vc-add" onclick="newVendor('${k}')">＋ 新增</button>`}</div></div>`; }).join('')}</div>`;
+    }
+    wrap.innerHTML = banner + (hit.length || !q ? body : `<div class="ven-empty">找不到「${esc(q)}」</div>`);
+  }
+  // ── 廠商資料視窗：每一欄離開時自動儲存 ──
+  function newVendor(cat) {
+    const v = { id: venId(), cat: VEN_CATS.includes(cat) ? cat : '其他', name: '', people: [P('')], _new: true };
+    ven.list.push(v); openVendor(v.id);
+    setTimeout(() => document.querySelector('#vd-body .vd-name')?.focus(), 60);
+  }
+  function openVendor(id) {
+    ven.editing = id; ven.mode = ven.list.find(x => x.id === id)?._new ? 'edit' : 'view'; renderVendorModal();
+    document.getElementById('vd-modal').classList.add('open');
+  }
+  function closeVendor() {
+    const v = ven.list.find(x => x.id === ven.editing);
+    if (v && v._new && !String(v.name || '').trim()) ven.list = ven.list.filter(x => x !== v); // 新增後沒填名稱就不留
+    else if (v && v._new) { delete v._new; venSave(v); }
+    ven.editing = null;
+    document.getElementById('vd-modal').classList.remove('open');
+    renderVendors();
+  }
+  function venField(key, el) {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
+    const val = el.value.trim(); if ((v[key] || '') === val) return;
+    v[key] = val;
+    if (v._new && !v.name) return; // 名稱還沒填，先不存
+    if (v._new) delete v._new;
+    venSave(v);
+    if (key === 'name' || key === 'alias' || key === 'company') renderVendorCases(v);
+  }
+  function venPerson(i, key, el) {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v || !v.people[i]) return;
+    const val = el.value.trim(); if ((v.people[i][key] || '') === val) return;
+    v.people[i][key] = val;
+    if (!v._new || v.name) { delete v._new; venSave(v); }
+  }
+  function venAddPerson() {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
+    (v.people = v.people || []).push(P('')); renderVendorModal();
+    const rows = document.querySelectorAll('#vd-body .vd-pr'); rows[rows.length - 1]?.querySelector('input')?.focus();
+  }
+  function venDelPerson(i) {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
+    v.people.splice(i, 1); renderVendorModal();
+    if (!v._new) venSave(v);
+  }
+  function deleteVendor() {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
+    if (!confirm(`確定要刪除「${v.name || '這家廠商'}」嗎？刪除後無法復原。`)) return;
+    venRemove(v.id); ven.editing = null;
+    document.getElementById('vd-modal').classList.remove('open');
+    renderVendors(); showToast('已刪除');
+  }
+  function copyText(t, label) {
+    navigator.clipboard?.writeText(t).then(() => showToast(`已複製${label} ✓`), () => showToast('⚠ 複製失敗'));
+  }
+  function renderVendorCases(v) {
+    const el = document.getElementById('vd-cases'); if (!el) return;
+    const list = venCases(v);
+    el.innerHTML = list.map(c => `<div class="vd-case" onclick="venGoCase('${c.id}')"><span>${esc(c.name)}</span><small>${c.status}・${caseYear(c)}</small><b>${Number(c.quote_amount) ? 'NT$ ' + Number(c.quote_amount).toLocaleString() : '—'}</b></div>`).join('')
+      || `<div class="vd-none">還沒有合作過的專案</div>`;
+    const t = document.getElementById('vd-cases-t'); if (t) t.textContent = `合作紀錄${list.length ? `（${list.length} 案）` : ''}`;
+  }
+  function venGoCase(id) {
+    document.getElementById('vd-modal').classList.remove('open'); ven.editing = null;
+    const c = cases.find(x => x.id === id); if (!c) return;
+    if (!inViewYear(c)) viewYear = caseYear(c);
+    setView('proj').then(() => openPanel(id));
+  }
+  // 打開廠商：先看「名片」（只顯示有填的，點電話撥打、點信箱寄信、點地址開地圖、點統編複製），按「編輯」才改
+  function venEdit(on) { ven.mode = on ? 'edit' : 'view'; renderVendorModal(); }
+  function renderVendorModal() {
+    const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
+    const a = s => esc(s || '').replace(/"/g, '&quot;');
+    const head = btn => `<div class="vv-hd"><div class="vv-hd-btns">${btn}<button type="button" class="btn-x" onclick="closeVendor()">✕</button></div></div>`;
+    if (ven.mode !== 'edit') {
+      const ppl = (v.people || []).filter(p => p.name || p.phone || p.email || p.line);
+      const person = p => `<div class="vv-person"><div class="vv-pn"><span>${esc(p.name || '（沒填名字）')}${p.role ? `<small>${esc(p.role)}</small>` : ''}</span>${p.line ? `<a class="vv-line" href="${lineHref(p.line)}" target="_blank" rel="noopener" onclick="return venLine('${a(p.line)}',event)" title="${venIsPhone() ? '在 LINE 打開' : '複製 LINE ID'}（${a(p.line)}）">${LINE_ICON}LINE</a>` : ''}</div>
+        ${p.phone ? `<a class="vv-link" href="${telHref(p.phone)}">${esc(p.phone)}</a>` : ''}${p.email ? `<a class="vv-link" href="mailto:${a(p.email)}">${esc(p.email)}</a>` : ''}</div>`;
+      const row = (label, html) => html ? `<div class="vv-row"><span>${label}</span><div>${html}</div></div>` : '';
+      const info = [
+        row('電話', v.phone && `<a class="vv-link" href="${telHref(v.phone)}">${esc(v.phone)}</a>`),
+        row('Email', v.email && `<a class="vv-link" href="mailto:${a(v.email)}">${esc(v.email)}</a>`),
+        row('地址', v.addr && `<a class="vv-link" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(v.addr)}" target="_blank" rel="noopener">${esc(v.addr)}</a>`),
+        row('統編', v.tax && `<a class="vv-link" href="javascript:void 0" onclick="copyText('${a(v.tax)}','統編')">${esc(v.tax)} <small>點一下複製</small></a>`),
+        row('抬頭', v.company && esc(v.company)),
+      ].join('');
+      document.getElementById('vd-body').innerHTML = head(`<button type="button" class="vv-edit" onclick="venEdit(true)">編輯</button>`) + `
+        <div class="vv-name">${esc(v.name || '未命名')}</div>
+        <div class="vv-sub">${esc(v.cat)}${v.tags ? `・${esc(v.tags)}` : ''}</div>
+        ${ppl.length ? `<div class="vv-t">聯絡人</div><div class="vv-box">${ppl.map(person).join('')}</div>` : ''}
+        ${info ? `<div class="vv-t">公司資料</div><div class="vv-box">${info}</div>` : ''}
+        ${v.note ? `<div class="vv-t">備註</div><div class="vv-box vv-note">${esc(v.note)}</div>` : ''}
+        <div class="vv-t" id="vd-cases-t">合作紀錄</div><div class="vd-cases" id="vd-cases"></div>`;
+      renderVendorCases(v);
+      return;
+    }
+    const field = (label, key, ph, extra = '') => `<label class="ve-row"><span>${label}</span><input type="text" value="${a(v[key])}" placeholder="${ph}" onblur="venField('${key}',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"${extra}></label>`;
+    const people = (v.people || []).map((p, i) => `<div class="ve-person">
+        <input type="text" value="${a(p.name)}" placeholder="姓名" onblur="venPerson(${i},'name',this)">
+        <input type="text" value="${a(p.role)}" placeholder="職稱" onblur="venPerson(${i},'role',this)">
+        <input type="text" value="${a(p.phone)}" placeholder="電話" inputmode="tel" onblur="venPerson(${i},'phone',this)">
+        <input type="text" value="${a(p.email)}" placeholder="Email" inputmode="email" onblur="venPerson(${i},'email',this)">
+        <label class="ve-line"><b>LINE</b><input type="text" value="${a(p.line)}" placeholder="LINE ID（沒有可空白）" autocapitalize="off" onblur="venPerson(${i},'line',this)"></label>
+        <button type="button" class="vd-pdel" title="移除這位聯絡人" onclick="venDelPerson(${i})">✕</button></div>`).join('');
+    document.getElementById('vd-body').innerHTML = head(`<button type="button" class="vv-edit on" onclick="venEdit(false)">完成</button>`) + `
+      <input type="text" class="vd-name" value="${a(v.name)}" placeholder="公司或店家名稱" onblur="venField('name',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
+      <div class="vv-box ve-box">
+        <label class="ve-row"><span>分類</span><select onchange="venField('cat',this)">${VEN_CATS.map(k => `<option${v.cat === k ? ' selected' : ''}>${k}</option>`).join('')}</select></label>
+        ${field('特色', 'tags', '例：日本錦緞、人像')}
+        ${field('電話', 'phone', '公司電話', ' inputmode="tel"')}
+        ${field('Email', 'email', '公司信箱', ' inputmode="email"')}
+        ${field('地址', 'addr', '地址')}
+        ${field('統編', 'tax', '8 碼', ' inputmode="numeric"')}
+        ${field('抬頭', 'company', '發票抬頭（公司全名）')}
+      </div>
+      <div class="vv-t">聯絡人</div>
+      <div class="vv-box">${people}<button type="button" class="vd-padd" onclick="venAddPerson()">＋ 新增聯絡人</button></div>
+      <div class="vv-t">備註</div>
+      <textarea class="ve-note" placeholder="LINE、合作心得、報價、注意事項……" onblur="venField('note',this)">${esc(v.note || '')}</textarea>
+      <div class="vv-t">簡稱 <small>專案裡用簡稱時填，例如「瑞美」，合作紀錄才找得到</small></div>
+      <input type="text" class="ve-alias" value="${a(v.alias)}" placeholder="例：瑞美, Tatler" onblur="venField('alias',this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()">
+      <div class="vd-foot"><button type="button" class="btn-del" onclick="deleteVendor()">刪除廠商</button></div>`;
+  }
   async function setView(v) {
     view = v;
     document.body.classList.toggle('fin-mode', v === 'fin');
+    document.body.classList.toggle('ven-mode', v === 'ven');
     document.getElementById('tab-proj').classList.toggle('on', v === 'proj');
     document.getElementById('tab-fin').classList.toggle('on', v === 'fin');
+    document.getElementById('tab-ven').classList.toggle('on', v === 'ven');
     closeInlineDD();
     if (v === 'fin') { if (viewingId) closePanel(); window.scrollTo(0, 0); await loadFinance(); }
+    if (v === 'ven') { if (viewingId) closePanel(); window.scrollTo(0, 0); renderVendors(); await loadVendors(); }
     renderAll();
   }
   function finEdit(id, field, input) {
@@ -3305,6 +3715,7 @@
   }
   function renderAll() {
     if (view === 'fin') renderFinance();
+    if (view === 'ven') renderVendors();
     const q = document.getElementById('search-input').value.trim().toLowerCase();
     let list = q ? cases.filter(c=>(c.name||'').toLowerCase().includes(q)||(c.client||'').toLowerCase().includes(q)) : [...cases];
     const years = [...new Set([String(new Date().getFullYear() + 1), String(new Date().getFullYear()), ...cases.map(caseYear)])].sort((a,b)=>b.localeCompare(a)); // 明年固定列出來，先排案子用
