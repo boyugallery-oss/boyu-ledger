@@ -72,26 +72,53 @@
     .fin-row { display: flex; align-items: center; gap: 6px; border-top: 1px solid #F0F0F0; padding: 2px 0; min-width: 0; }
     .fin-row .fin-name { flex: 1; min-width: 0; }
     .fin-row .fin-amt { width: 62px; flex-shrink: 0; text-align: right; }
+    /* 會計代辦費：名稱下面一行淺灰小字寫多久付一次，卡片再窄名稱也不會被擠掉 */
+    .fin-nm { flex: 1; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; }
+    .fin-nm .fin-name { flex: none; }
+    .fin-sub { display: flex; align-items: center; gap: 6px; margin: -3px 0 3px; font-size: 0.64rem; color: #BBB; white-space: nowrap; }
+    .fin-cyc { background: none; border: none; padding: 0 2px; margin: 0 0 0 -2px; font-size: 0.64rem; line-height: 1.3; color: #AAA; font-family: inherit; cursor: pointer; white-space: nowrap; border-radius: 4px; }
+    .fin-cyc:hover { color: #1C1C1C; background: #F7F6F3; }
+    .fin-misc { color: #888; font-size: 0.78rem; justify-content: space-between; min-height: 30px; }
     .fin-row .fin-yearly { width: 76px; flex-shrink: 0; text-align: right; font-size: 0.68rem; color: #AAA; white-space: nowrap; }
     .fin-x { flex-shrink: 0; background: none; border: none; cursor: pointer; color: #D9534F; font-size: 0.6rem; line-height: 1; padding: 5px 5px; border-radius: 4px; opacity: 0.8; font-family: inherit; }
     .fin-x:hover { opacity: 1; background: #FDECEA; }
     .fin-add { background: none; border: none; color: #BBB; font-size: 0.76rem; font-family: inherit; cursor: pointer; padding: 7px 0 2px; }
     .fin-add:hover { color: #1C1C1C; }
     .fin-vat-note { font-size: 0.68rem; color: #AAA; line-height: 1.45; margin-bottom: 6px; flex-shrink: 0; }
-    .fin-vat { display: grid; grid-template-columns: 1fr 1fr; gap: 0 14px; }
-    .fin-vat .fin-row { border-top: none; border-bottom: 1px solid #F0F0F0; }
-    .fin-vat label { font-size: 0.76rem; color: #888; width: 56px; flex-shrink: 0; white-space: nowrap; }
+    /* 會計每期請款：每兩個月一列，點開照請款單填 */
+    .acc-p { border-top: 1px solid #F0F0F0; }
+    .acc-sum { display: flex; align-items: center; gap: 8px; min-height: 30px; cursor: pointer; font-size: 0.8rem; }
+    .acc-sum:hover { background: #FAFAF8; }
+    .acc-lb { width: 52px; flex-shrink: 0; color: #666; white-space: nowrap; }
+    .acc-tx { flex: 1; min-width: 0; color: #888; font-size: 0.74rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .acc-bill { white-space: nowrap; font-weight: 600; }
+    .acc-ok { color: #4CAF50; } .acc-bad { color: #D9534F; }
+    .acc-arw { color: #CCC; font-size: 0.6rem; transition: transform 0.15s; }
+    .acc-p.open .acc-arw { transform: rotate(90deg); }
+    .acc-p.open .acc-lb { color: #000; font-weight: 700; }
+    .acc-det { background: #F7F6F3; border-radius: 10px; padding: 6px 10px 8px; margin: 0 0 8px; }
+    .acc-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+    .acc-fields .fin-row { border-top: none; border-bottom: 1px solid #E9E8E3; }
+    .acc-fields label { font-size: 0.72rem; color: #888; width: 52px; flex-shrink: 0; white-space: nowrap; }
+    .acc-fields .fin-amt { flex: 1; width: auto !important; min-width: 0; background: transparent; }
+    .acc-calc { font-size: 0.72rem; color: #666; line-height: 1.6; margin-top: 6px; }
+    .acc-calc b { color: #1C1C1C; }
+    .acc-pend-hd { display: flex; align-items: baseline; gap: 8px; margin: 12px 0 2px; font-size: 0.8rem; font-weight: 600; }
+    .acc-pend-hd small { font-weight: 400; font-size: 0.68rem; color: #AAA; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .acc-pend-hd b { font-size: 0.78rem; }
+    .fin-done { flex-shrink: 0; background: none; border: 1px solid #E4E4E0; border-radius: 6px; color: #888; font-size: 0.66rem; font-family: inherit; cursor: pointer; padding: 3px 6px; white-space: nowrap; }
+    .fin-done:hover { color: #4CAF50; border-color: #4CAF50; }
     @media (min-width: 900px) and (min-height: 600px) {
       .fin-wrap { height: 100vh; padding-bottom: 16px; flex-direction: column; overflow: hidden; }
       body.fin-mode .fin-wrap { display: flex; }
       .fin-panel, .fin-banner { flex-shrink: 0; }
       .fin-grid { flex: 1; min-height: 0; grid-template-rows: 1fr 1fr; }
-      .fin-grid .sec-month, .fin-grid .sec-months { grid-row: 1 / 3; }
+      .fin-grid .sec-vat, .fin-grid .sec-months { grid-row: 1 / 3; }
       .sec-months .fin-body { display: flex; flex-direction: column; }
       .sec-months .fm-row { flex: 1; max-height: 44px; }
       .sec-months .fm-head { flex: none; }
     }
-    /* 電腦：上面一排由左到右是「營業額 − 專案成本 − 營運成本」，本月淨收入、年淨收入放最右邊；下面每月收支也放最右欄。
+    /* 電腦：下面左欄每月固定＋單次、中欄每兩個月＋每年、第三欄整欄是會計每期請款。上面一排由左到右是「營業額 − 專案成本 − 營運成本」，本月淨收入、年淨收入放最右邊；下面每月收支也放最右欄。
        手機照原本的順序：年淨收入、本月、每月收支排在最前面 */
     @media (min-width: 900px) {
       .fin-wrap { --rw: clamp(330px, 27.8vw, 440px); }
@@ -99,11 +126,11 @@
       .fin-grid { grid-template-columns: 1.12fr 1fr 1fr var(--rw); }
       .fin-top .fin-hero { grid-column: 5; grid-row: 1; }
       .fin-top .fin-now { grid-column: 4; grid-row: 1; }
-      .fin-grid .sec-month { grid-column: 1; }
+      .fin-grid .sec-month { grid-column: 1; grid-row: 1; }
+      .fin-grid .sec-once { grid-column: 1; grid-row: 2; }
       .fin-grid .sec-bimonth { grid-column: 2; grid-row: 1; }
       .fin-grid .sec-year { grid-column: 2; grid-row: 2; }
-      .fin-grid .sec-once { grid-column: 3; grid-row: 1; }
-      .fin-grid .sec-vat { grid-column: 3; grid-row: 2; }
+      .fin-grid .sec-vat { grid-column: 3; }
       .fin-grid .sec-months { grid-column: 4; }
     }
     @media (max-width: 899px) {
@@ -928,6 +955,16 @@
     .ve-person .vd-pdel { grid-row: 1; grid-column: 3; }
     .ve-note { min-height: 80px; }
     #vd-modal .vd-name { width: 100%; margin-bottom: 12px; }
+    /* 手機：廠商資料跟專案一樣從右邊滑進來；點外面或往右滑就關掉 */
+    @keyframes vdIn { from { transform: translateX(100%); } to { transform: translateX(0); } }
+    @keyframes vdOut { from { transform: translateX(var(--vd-x, 0px)); } to { transform: translateX(100%); } }
+    @keyframes vdFade { from { opacity: 0; } to { opacity: 1; } }
+    @media (max-width: 640px) {
+      #vd-modal { align-items: stretch; justify-content: flex-end; background: rgba(0,0,0,0.25); animation: vdFade 0.3s; }
+      #vd-modal .modal-sheet { position: fixed; top: 52px; right: 0; bottom: 0; width: 90%; max-width: none; max-height: none; border-radius: 0; padding: 18px 16px 60px; animation: vdIn 0.38s cubic-bezier(0.4,0,0.2,1); box-shadow: -6px 0 24px rgba(0,0,0,0.08); }
+      #vd-modal.closing { background: transparent; transition: background 0.3s; }
+      #vd-modal.closing .modal-sheet { animation: vdOut 0.3s cubic-bezier(0.4,0,0.2,1) forwards; }
+    }
     .vd-pdel { background: none; border: none; color: #CCC; cursor: pointer; font-size: 0.8rem; }
     .vd-pdel:hover { color: #E53935; }
     .vd-padd { display: block; width: 100%; text-align: left; padding: 8px 14px; font-size: 0.75rem; color: #AAA; background: none; border: none; border-top: 1px solid #F3F3F0; cursor: pointer; font-family: inherit; }
@@ -3217,7 +3254,7 @@
 
   // ── 財務管理：跟專案無關的營運成本（房租、會計、網域…），以及「今年到底留下多少」──
   // 收入來自專案管理（實際入帳、未稅），這裡只往下扣營運成本；算出來的數字不會回頭影響專案管理。
-  // 資料一年一份：{ items:[{id,name,amount,cycle}], vat:{'1'..'6': 金額} }，cycle = month（×12）/ bimonth（×6）/ year / once
+  // 資料一年一份：{ items:[{id,name,amount,cycle}], vat:{'1'..'6': 金額}, acct:{'1'..'6': 請款單明細}, pend:[還沒報的進項發票] }，cycle = month（×12）/ bimonth（×6）/ year / once
   // 存在 Supabase 的 finance 資料表（year 為主鍵）；資料表還沒建立時先存在這台裝置
   let view = 'proj';
   const fin = { loaded: false, cloud: false, years: {}, drafts: {} };
@@ -3225,7 +3262,7 @@
     { key:'month',   title:'每月固定支出', times:12, hint:'每個月都要付的。填一個月的金額，會自動乘以 12。' },
     { key:'bimonth', title:'每兩個月（會計）', times:6, hint:'會計每兩個月請款一次的服務費。填一期的金額，會自動乘以 6。' },
     { key:'year',    title:'每年一次', times:1, hint:'一年只付一次的。' },
-    { key:'once',    title:'單次支出', times:1, hint:'不固定的雜支，例如郵資、發票本。' },
+    { key:'once',    title:'單次支出', times:1, hint:'不固定的雜支。會計請款單上的郵資、發票本記在「會計每期請款」那期就好。' },
   ];
   const FIN_SEED = [
     ['房租', 12800, 'month'], ['勞健保（工會）', 2400, 'month'], ['水電雜費', 1000, 'month'], ['電信費', 599, 'month'], ['iCloud 200G', 90, 'month'], ['Google 雲端 100G', 65, 'month'],
@@ -3243,8 +3280,38 @@
                        : FIN_SEED.map(([name, amount, cycle]) => ({ id: finId(), name, amount, cycle }));
     return fin.drafts[y] = { items, vat: {}, draft: prev ? `沿用 ${prev} 年的項目` : '預設項目' };
   }
+  // 付給會計的代辦費放在「會計代辦費」一區（不管每兩個月還是每年）。t.who = 'acct' / 'other'；
+  // 舊資料沒有 who：原本「每兩個月（會計）」的、或名稱有「申報、帳務、記帳、會計」的算會計
+  const finIsAcct = t => t.who ? t.who === 'acct' : t.cycle === 'bimonth' || /申報|帳務|記帳|會計/.test(t.name || '');
+  // 滑鼠移到會計代辦費的項目上，顯示這筆是什麼
+  const FIN_TIPS = [
+    [/營業稅/, '每兩個月幫你向國稅局申報營業稅（401 申報書）：銷項稅 − 進項稅 − 留抵，算出這期要繳多少。單數月請款。'],
+    [/帳務|記帳/, '每兩個月幫你整理發票、記帳，是報營業稅和年底報所得稅的基礎。單數月請款。'],
+    [/扣繳/, '每年 1 月申報：去年你付錢給個人（攝影師、設計師、個人房東…）時預先扣下的稅，向國稅局回報付了誰多少。'],
+    [/營所稅|所得稅/, '每年 5 月幫你算工作室一整年賺多少（收入 − 成本），申報所得稅。這是代辦費，稅金本身另外算。'],
+  ];
+  const finTip = name => (FIN_TIPS.find(([re]) => re.test(name || '')) || [])[1] || '';
+  const FIN_CYC_LABEL = { month:'每月', bimonth:'每兩個月', year:'每年' };
   const finTimes = cycle => (FIN_CYCLES.find(g => g.key === cycle) || {}).times || 1;
-  const finAnnual = d => d.items.reduce((s, t) => s + (Number(t.amount) || 0) * finTimes(t.cycle), 0);
+  const finNum = v => Number(v) || 0;
+  const finMisc = d => Object.values(d.acct || {}).reduce((s, a) => s + finNum(a.misc), 0);
+  const finAnnual = d => d.items.reduce((s, t) => s + (Number(t.amount) || 0) * finTimes(t.cycle), 0) + finMisc(d);
+  // 會計每期請款：照會計的請款單填 acct[p] = { sales 銷售額, out 銷項稅, inp 進項稅, carry 上期留抵, misc 雜支, bill 請款總額 }
+  // 應繳營業稅 = 銷項稅 − 進項稅 − 上期留抵；不夠扣的變成留抵帶到下一期（12 月那期帶到明年 1–2 月）。上期留抵、銷項稅沒填就自動算
+  // 那一期沒填明細的話，沿用之前直接填的 vat[p]
+  function finAcctCalc(y, depth = 0) {
+    const d = fin.years[y] || fin.drafts[y] || {}, py = String(+y - 1);
+    let left = depth < 10 && fin.years[py] ? finAcctCalc(py, depth + 1)[5].left : 0;
+    return [1, 2, 3, 4, 5, 6].map(p => {
+      const a = d.acct?.[p] || {}, has = a.out != null || a.sales != null || a.inp != null;
+      const out = a.out != null ? finNum(a.out) : Math.round(finNum(a.sales) * 0.05);
+      const r = { p, a, has, out, inp: finNum(a.inp), carryIn: a.carry != null ? finNum(a.carry) : left, misc: finNum(a.misc), bill: a.bill != null ? finNum(a.bill) : null };
+      if (has) { const net = r.out - r.inp - r.carryIn; r.tax = Math.max(0, net); left = Math.max(0, -net); }
+      else { r.tax = finNum(d.vat?.[p]); if (r.tax) left = 0; }
+      r.left = left;
+      return r;
+    });
+  }
   async function loadFinance() {
     if (fin.loaded) return;
     try { const r = localStorage.getItem('boyu_finance'); if (r) fin.years = JSON.parse(r) || {}; } catch (e) {}
@@ -3271,17 +3338,21 @@
     const rows = [[`${y} 年財務總表`], [], ['項目', '', '', '', '金額'],
       ['專案營業額（未稅）', '', '', '', rev], ['專案成本', '', '', '', pcost], ['營運成本（全年）', '', '', '', op], ['淨收入', '', '', '', rev - pcost - op],
       [], ['週期', '名稱', '每次金額', '一年次數', '全年金額']];
-    for (const g of FIN_CYCLES) for (const t of d.items.filter(x => x.cycle === g.key)) rows.push([g.title, t.name || '', Number(t.amount) || 0, g.times, (Number(t.amount) || 0) * g.times]);
-    rows.push(['營運成本合計', '', '', '', op], [], ['代繳營業稅（不算成本）', '期別', '', '', '金額']);
-    for (let p = 1; p <= 6; p++) rows.push(['', `${p*2-1}–${p*2} 月`, '', '', Number(d.vat?.[p]) || 0]);
-    rows.push(['代繳營業稅合計', '', '', '', Object.values(d.vat || {}).reduce((s, v) => s + (Number(v) || 0), 0)]);
+    for (const t of d.items.filter(finIsAcct)) rows.push(['會計代辦費', `${t.name || ''}（${FIN_CYC_LABEL[t.cycle] || '單次'}）`, Number(t.amount) || 0, finTimes(t.cycle), (Number(t.amount) || 0) * finTimes(t.cycle)]);
+    for (const g of FIN_CYCLES) for (const t of d.items.filter(x => x.cycle === g.key && !finIsAcct(x))) rows.push([g.title, t.name || '', Number(t.amount) || 0, g.times, (Number(t.amount) || 0) * g.times]);
+    if (finMisc(d)) rows.push(['會計雜支', '郵資、發票本等', '', '', finMisc(d)]);
+    rows.push(['營運成本合計', '', '', '', op], [], ['會計每期請款', '期別', '銷售額', '銷項稅', '進項稅', '上期留抵', '應繳營業稅', '雜支', '請款總額']);
+    const ac = finAcctCalc(y);
+    for (const r of ac) rows.push(['', `${r.p*2-1}–${r.p*2} 月`, r.a.sales ?? '', r.has ? r.out : '', r.has ? r.inp : '', r.has ? r.carryIn : '', r.tax, r.misc || '', r.bill ?? '']);
+    rows.push(['代繳營業稅合計（不算成本）', '', '', '', '', '', ac.reduce((s, r) => s + r.tax, 0)]);
+    if ((d.pend || []).length) { rows.push([], ['還沒報的進項發票', '名稱', '稅額']); for (const t of d.pend) rows.push(['', t.name || '', finNum(t.tax)]); }
     const isNumbers = kind === 'numbers', label = isNumbers ? 'Numbers' : 'Excel';
     showToast(`正在產生 ${label} 檔…`);
     try {
       const XLSX = await loadXLSX(isNumbers);
       const ws = XLSX.utils.aoa_to_sheet(rows);
-      ws['!cols'] = [{wch:24},{wch:26},{wch:12},{wch:10},{wch:14}];
-      for (let r = 1; r <= rows.length; r++) for (const col of ['C','E']) { const cell = ws[col + r]; if (cell && typeof cell.v === 'number') cell.z = '#,##0'; }
+      ws['!cols'] = [{wch:26},{wch:26},{wch:12},{wch:10},{wch:14},{wch:10},{wch:12},{wch:8},{wch:12}];
+      for (let r = 1; r <= rows.length; r++) for (const col of ['C','D','E','F','G','H','I']) { const cell = ws[col + r]; if (cell && typeof cell.v === 'number') cell.z = '#,##0'; }
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, `${y}年財務`);
       const buf = isNumbers
@@ -3324,9 +3395,14 @@
     try { localStorage.setItem('boyu_finance', JSON.stringify(fin.years)); } catch (e) {}
     if (!db || !session || !fin.cloud) return;
     setSyncDot('loading');
-    try { const { error } = await db.from('finance').upsert({ year: y, data: d, updated_at: new Date().toISOString() }); setSyncDot(error ? 'err' : 'ok'); if (error) showToast('⚠ 雲端同步失敗：' + error.message); }
-    catch (e) { setSyncDot('err'); }
+    // 一筆一筆照順序存：連續改好幾格時，比較早的那次不會晚到、蓋掉後面的修改
+    const run = async () => {
+      try { const { error } = await db.from('finance').upsert({ year: y, data: fin.years[y], updated_at: new Date().toISOString() }); setSyncDot(error ? 'err' : 'ok'); if (error) showToast('⚠ 雲端同步失敗：' + error.message); }
+      catch (e) { setSyncDot('err'); }
+    };
+    return finSaveQ = finSaveQ.then(run, run);
   }
+  let finSaveQ = Promise.resolve();
   // ── 廠商名單：合作的廠商、公關公司、客戶窗口。跟專案、財務分開存（Supabase 的 vendors 資料表，一家一列）──
   // 資料表還沒建立時先存在這台裝置；示範模式不存。專案、財務的資料完全不會被這裡改到
   const venDemo = () => typeof _demo !== 'undefined' && _demo; // 正式版沒有示範模式
@@ -3481,16 +3557,47 @@
   }
   function openVendor(id) {
     ven.editing = id; ven.mode = ven.list.find(x => x.id === id)?._new ? 'edit' : 'view'; renderVendorModal();
-    document.getElementById('vd-modal').classList.add('open');
+    const ov = document.getElementById('vd-modal'); ov.classList.remove('closing'); ov.querySelector('.modal-sheet').style.transform = ''; ov.classList.add('open');
   }
-  function closeVendor() {
+  function closeVendor(fromX = 0) {
     const v = ven.list.find(x => x.id === ven.editing);
     if (v && v._new && !String(v.name || '').trim()) ven.list = ven.list.filter(x => x !== v); // 新增後沒填名稱就不留
     else if (v && v._new) { delete v._new; venSave(v); }
     ven.editing = null;
-    document.getElementById('vd-modal').classList.remove('open');
+    venHideModal(fromX);
     renderVendors();
   }
+  // 手機版：滑出去再關；電腦版直接關
+  function venHideModal(fromX = 0) {
+    const ov = document.getElementById('vd-modal'), sh = ov.querySelector('.modal-sheet');
+    if (!venMobile() || !ov.classList.contains('open')) { ov.classList.remove('open', 'closing'); return; }
+    sh.style.setProperty('--vd-x', fromX + 'px'); sh.style.transform = '';
+    ov.classList.add('closing');
+    setTimeout(() => { ov.classList.remove('open', 'closing'); sh.style.removeProperty('--vd-x'); }, 290);
+  }
+  // 往右滑關掉（手機）：水平滑動才算，上下捲動不影響
+  (() => {
+    const sh = () => document.querySelector('#vd-modal .modal-sheet');
+    let x0 = 0, y0 = 0, on = false, dragging = false;
+    document.addEventListener('touchstart', e => {
+      if (!venMobile() || !document.getElementById('vd-modal').classList.contains('open') || !e.target.closest('#vd-modal .modal-sheet')) return;
+      if (e.target.closest('input, textarea, select')) return; // 正在打字的欄位不攔
+      x0 = e.touches[0].clientX; y0 = e.touches[0].clientY; on = true; dragging = false;
+    }, { passive: true });
+    document.addEventListener('touchmove', e => {
+      if (!on) return;
+      const dx = e.touches[0].clientX - x0, dy = e.touches[0].clientY - y0;
+      if (!dragging) { if (Math.abs(dy) > 10 && Math.abs(dy) > Math.abs(dx)) { on = false; return; } if (dx > 10) dragging = true; else return; }
+      sh().style.transition = 'none'; sh().style.transform = `translateX(${Math.max(0, dx)}px)`;
+    }, { passive: true });
+    document.addEventListener('touchend', e => {
+      if (!on) return; on = false;
+      const dx = e.changedTouches[0].clientX - x0, el = sh();
+      el.style.transition = '';
+      if (dragging && dx > 70) closeVendor(dx);
+      else { el.style.transition = 'transform 0.2s'; el.style.transform = ''; setTimeout(() => { el.style.transition = ''; }, 220); }
+    });
+  })();
   function venField(key, el) {
     const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
     const val = el.value.trim(); if ((v[key] || '') === val) return;
@@ -3520,7 +3627,7 @@
     const v = ven.list.find(x => x.id === ven.editing); if (!v) return;
     if (!confirm(`確定要刪除「${v.name || '這家廠商'}」嗎？刪除後無法復原。`)) return;
     venRemove(v.id); ven.editing = null;
-    document.getElementById('vd-modal').classList.remove('open');
+    venHideModal();
     renderVendors(); showToast('已刪除');
   }
   function copyText(t, label) {
@@ -3613,20 +3720,49 @@
     if (t[field] === val) return;
     finSnap(); t[field] = val; finSave(y, d); renderFinance(true);
   }
-  function finAdd(cycle) {
-    const y = finYear(), d = finData(y), t = { id: finId(), name: '', amount: 0, cycle };
+  function finAdd(cycle, who = 'other') {
+    const y = finYear(), d = finData(y), t = { id: finId(), name: '', amount: 0, cycle, who };
     finSnap(); d.items.push(t); finSave(y, d); renderFinance();
     document.querySelector(`#fin-wrap [data-fin="${t.id}"] .fin-name`)?.focus();
+  }
+  function finCycle(id, anchor) {
+    showInlineDD(anchor, Object.entries(FIN_CYC_LABEL).map(([value, label]) => ({ value, cls:'', label })), v => {
+      const y = finYear(), d = finData(y), t = d.items.find(x => x.id === id); if (!t || t.cycle === v) return;
+      finSnap(); t.cycle = v; t.who = 'acct'; finSave(y, d); renderFinance();
+    });
   }
   function finDel(id) {
     const y = finYear(), d = finData(y);
     finSnap(); d.items = d.items.filter(x => x.id !== id); finSave(y, d); renderFinance();
   }
-  function finVat(p, input) {
-    const y = finYear(), d = finData(y), val = Math.round(Number(input.value.replace(/[^\d.]/g, ''))) || 0;
-    input.value = val ? val.toLocaleString() : '';
-    if ((Number(d.vat[p]) || 0) === val) return;
-    finSnap(); d.vat = { ...d.vat, [p]: val }; finSave(y, d); renderFinance(true);
+  let finOpenP = 0;
+  function finTogglePeriod(p) { finOpenP = finOpenP === p ? 0 : p; renderFinance(); }
+  // 清空的格子不存（變回自動算），填 0 才算 0
+  function finAcct(p, field, input) {
+    const y = finYear(), d = finData(y), raw = input.value.replace(/[^\d]/g, ''), val = raw === '' ? null : +raw;
+    input.value = val == null ? '' : val.toLocaleString();
+    const a = { ...(d.acct?.[p] || {}) };
+    if ((a[field] ?? null) === val) return;
+    finSnap(); if (val == null) delete a[field]; else a[field] = val;
+    d.acct = { ...d.acct, [p]: a };
+    d.vat = { ...d.vat }; finAcctCalc(y).forEach(r => { if (r.has) d.vat[r.p] = r.tax; }); // 舊版頁面只看得懂 vat，順便存一份應繳金額
+    finSave(y, d); renderFinance(true);
+  }
+  function finPendAdd() {
+    const y = finYear(), d = finData(y), t = { id: finId(), name: '', tax: 0 };
+    finSnap(); d.pend = [...(d.pend || []), t]; finSave(y, d); renderFinance();
+    document.querySelector(`#fin-wrap [data-pend="${t.id}"] .fin-name`)?.focus();
+  }
+  function finPendEdit(id, field, input) {
+    const y = finYear(), d = finData(y), t = (d.pend || []).find(x => x.id === id); if (!t) return;
+    const val = field === 'tax' ? (Math.round(Number(input.value.replace(/[^\d.]/g, ''))) || 0) : input.value.trim();
+    if (field === 'tax') input.value = val ? val.toLocaleString() : '';
+    if (t[field] === val) return;
+    finSnap(); t[field] = val; finSave(y, d); renderFinance(true);
+  }
+  function finPendDel(id) {
+    const y = finYear(), d = finData(y);
+    finSnap(); d.pend = (d.pend || []).filter(x => x.id !== id); finSave(y, d); renderFinance();
   }
   // patch = true：只把會變的數字（標了 data-live 的地方）換掉，輸入框原封不動
   function renderFinance(patch) {
@@ -3655,26 +3791,69 @@
     const cm = curM ? months[curM - 1] : null;
     const nowCard = cm ? `<div class="yr-card fin-now"><div class="yr-label">${curM} 月淨收入</div><div class="yr-value ${netCls(cm.net)}">${money(cm.net)}</div><div class="yr-sub">專案收入 ${money(cm.pin)} − 營運 ${money(opMonth)}</div></div>` : '';
     const key = h => `onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"`;
-    const row = t => `<div class="fin-row" data-fin="${t.id}">
-        <input class="prop-input fin-name" placeholder="名稱" value="${esc(t.name).replace(/"/g,'&quot;')}" onblur="finEdit('${t.id}','name',this)" ${key()}>
+    // 會計代辦費：名稱一行，下面小字是「（多久一次）・一年多少」，把右邊的位置讓給名稱；滑鼠移上去看這筆是什麼
+    const accSub = t => `<div class="fin-sub"><button class="fin-cyc" onclick="event.stopPropagation();finCycle('${t.id}',this)" title="點一下改成每月、每兩個月或每年">（${FIN_CYC_LABEL[t.cycle] || '單次'}）▾</button><span data-live>一年 ${money(finNum(t.amount) * finTimes(t.cycle))}</span></div>`;
+    const tip = t => { const s = finTip(t.name); return s ? ` title="${s}"` : ''; };
+    const row = t => `<div class="fin-row" data-fin="${t.id}"${finIsAcct(t) ? tip(t) : ''}>
+        ${finIsAcct(t) ? '<div class="fin-nm">' : ''}<input class="prop-input fin-name" placeholder="名稱" value="${esc(t.name).replace(/"/g,'&quot;')}" onblur="finEdit('${t.id}','name',this)" ${key()}>${finIsAcct(t) ? `${accSub(t)}</div>` : ''}
         <input class="prop-input fin-amt" inputmode="numeric" placeholder="0" value="${Number(t.amount) ? Number(t.amount).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finEdit('${t.id}','amount',this)" ${key()}>
-        ${finTimes(t.cycle) > 1 ? `<span class="fin-yearly" data-live>一年 ${money((Number(t.amount)||0) * finTimes(t.cycle))}</span>` : ''}
+        ${finTimes(t.cycle) > 1 && !finIsAcct(t) ? `<span class="fin-yearly" data-live>一年 ${money((Number(t.amount)||0) * finTimes(t.cycle))}</span>` : ''}
         <button class="fin-x" onclick="finDel('${t.id}')" title="刪除這一筆">✕</button>
       </div>`;
-    // 卡片順序配合三欄排法：每月（左欄整欄）｜每兩個月、每年（中欄）｜單次、營業稅（右欄）
+    // 卡片順序配合三欄排法：每月、單次（左欄）｜會計代辦費、每年（中欄）｜會計每期請款（第三欄）｜每月收支（右欄）
     const card = g => {
-      const items = d.items.filter(t => t.cycle === g.key), sum = items.reduce((s, t) => s + (Number(t.amount) || 0) * g.times, 0);
+      const items = d.items.filter(t => t.cycle === g.key && !finIsAcct(t)), sum = items.reduce((s, t) => s + (Number(t.amount) || 0) * g.times, 0);
       return `<div class="rv-sec sec-${g.key}" title="${g.hint}">
         <div class="fin-sec-hd"><div class="bd-title">${g.title}</div><small>全年</small><b data-live>${money(sum)}</b></div>
         <div class="fin-body">${items.map(row).join('')}<button class="fin-add" onclick="finAdd('${g.key}')">＋ 新增</button></div>
       </div>`;
     };
+    // 會計代辦費：一年付給會計多少（服務費全年 ＋ 請款單上的雜支，不含代繳營業稅）
+    const accItems = d.items.filter(finIsAcct), miscSum = finMisc(d);
+    const accSum = accItems.reduce((s, t) => s + finNum(t.amount) * finTimes(t.cycle), 0) + miscSum;
+    const accCard = `<div class="rv-sec sec-bimonth" title="付給會計的服務費，括號裡是多久付一次（點一下可以改）。全年合計含請款單上的郵資、發票本，不含代繳營業稅。">
+        <div class="fin-sec-hd"><div class="bd-title">會計代辦費</div><small>全年</small><b data-live>${money(accSum)}</b></div>
+        <div class="fin-body">${accItems.map(row).join('')}
+          ${miscSum ? `<div class="fin-row fin-misc" title="請款單上「其他」那幾項，金額每期不一樣，算營運成本。&#10;・寄信郵資：會計寄申報資料、發票、國稅局文件給你或幫你寄出的郵資（例：28 元 × 3 封）。&#10;・手開發票本：會計幫你買的空白手開發票（三聯式），要手寫開發票給客戶時用。"><span>請款單雜支（郵資、發票本）</span><span class="fin-yearly" data-live>一年 ${money(miscSum)}</span></div>` : ''}
+          <button class="fin-add" onclick="finAdd('bimonth','acct')">＋ 新增</button></div>
+      </div>`;
     const G = k => FIN_CYCLES.find(g => g.key === k);
-    const vatSum = Object.values(d.vat || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+    // 會計每期請款：一期一列，點開照請款單填；請款總額會跟「會計服務費 ＋ 雜支 ＋ 營業稅」對帳
+    const ac = finAcctCalc(y), vatSum = ac.reduce((s, r) => s + r.tax, 0);
+    const svc = d.items.filter(t => t.cycle === 'bimonth' && finIsAcct(t)).reduce((s, t) => s + finNum(t.amount), 0);
+    const amt = (p, f, ph = '') => `<input class="prop-input fin-amt" inputmode="numeric" placeholder="${ph}" value="${d.acct?.[p]?.[f] != null ? finNum(d.acct[p][f]).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finAcct('${p}','${f}',this)" ${key()}>`;
+    const fld = (p, label, f, ph) => `<div class="fin-row"${f === 'misc' ? ' title="請款單上「其他」那幾項，金額每期不一樣，算營運成本。&#10;・寄信郵資：會計寄申報資料、發票、國稅局文件給你或幫你寄出的郵資（例：28 元 × 3 封）。&#10;・手開發票本：會計幫你買的空白手開發票（三聯式），要手寫開發票給客戶時用。"' : ''}><label>${label}</label>${amt(p, f, ph)}</div>`;
+    const accRow = r => {
+      const exp = svc + r.misc + r.tax, open = finOpenP === r.p, diff = r.bill == null ? 0 : r.bill - exp;
+      const chk = r.bill == null ? '' : diff ? '<span class="acc-bad">≠</span>' : '<span class="acc-ok">✓</span>';
+      const sum = `<div class="acc-sum" onclick="finTogglePeriod(${r.p})"><span class="acc-lb">${r.p*2-1}–${r.p*2} 月</span>
+          <span class="acc-tx" data-live>${r.has || r.tax ? `營業稅 ${money(r.tax)}` : ''}${r.has && r.left ? ` · 留抵 ${money(r.left)}` : ''}</span>
+          <span class="acc-bill" data-live>${r.bill != null ? `${money(r.bill)} ${chk}` : ''}</span><span class="acc-arw">▶</span></div>`;
+      if (!open) return `<div class="acc-p">${sum}</div>`;
+      const legacy = !r.has && r.tax ? `之前直接填的營業稅 ${money(r.tax)}；填了銷項、進項之後改用明細算。<br>` : '';
+      const calc = r.has
+        ? `銷項 ${money(r.out)} − 進項 ${money(r.inp)} − 上期留抵 ${money(r.carryIn)}${r.a.carry == null ? '（自動）' : ''}<br>＝ 應繳營業稅 <b>${money(r.tax)}</b>${r.left ? `，留抵 <b>${money(r.left)}</b> 帶到下一期` : ''}<br>`
+        : `${legacy}上期留抵 ${money(r.carryIn)}${r.a.carry == null ? '（自動）' : ''}<br>`;
+      const bill = `會計費 ${money(svc)} ＋ 雜支 ${money(r.misc)} ＋ 營業稅 ${money(r.tax)} ＝ <b>${money(exp)}</b>`
+        + (r.bill == null ? '' : diff ? `<br><span class="acc-bad">≠ 請款單 ${money(r.bill)}，差 ${money(Math.abs(diff))}${diff > 0 ? '（可能含扣繳或營所稅申報費）' : ''}</span>` : ' <span class="acc-ok">✓ 跟請款單一樣</span>');
+      return `<div class="acc-p open">${sum}<div class="acc-det">
+          <div class="acc-fields">${fld(r.p, '銷售額', 'sales')}${fld(r.p, '銷項稅', 'out', '自動 5%')}${fld(r.p, '進項稅', 'inp')}${fld(r.p, '上期留抵', 'carry', '自動')}${fld(r.p, '雜支', 'misc')}${fld(r.p, '請款總額', 'bill')}</div>
+          <div class="acc-calc" data-live>${calc}${bill}</div>
+        </div></div>`;
+    };
+    const pend = d.pend || [], pendSum = pend.reduce((s, t) => s + finNum(t.tax), 0);
+    const pendRow = t => `<div class="fin-row" data-pend="${t.id}">
+        <input class="prop-input fin-name" placeholder="哪一張發票（例：6 月紙材）" value="${esc(t.name || '').replace(/"/g,'&quot;')}" onblur="finPendEdit('${t.id}','name',this)" ${key()}>
+        <input class="prop-input fin-amt" inputmode="numeric" placeholder="稅額" value="${finNum(t.tax) ? finNum(t.tax).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finPendEdit('${t.id}','tax',this)" ${key()}>
+        <button class="fin-done" onclick="finPendDel('${t.id}')" title="已經交給會計申報，從清單拿掉">已交</button>
+      </div>`;
     const vat = `<div class="rv-sec sec-vat">
-        <div class="fin-sec-hd"><div class="bd-title">代繳營業稅</div><small>全年</small><b style="color:#AAA" data-live>${money(vatSum)}</b></div>
-        <div class="fin-vat-note">代收再轉交國稅局的稅，<b style="color:#888">不算成本</b>、不會從淨收入扣，這裡只做紀錄。</div>
-        <div class="fin-body"><div class="fin-vat">${[1,2,3,4,5,6].map(p => `<div class="fin-row"><label>${p*2-1}–${p*2} 月</label><input class="prop-input fin-amt" style="flex:1;width:auto;min-width:0;margin-left:0" inputmode="numeric" placeholder="0" value="${Number(d.vat?.[p]) ? Number(d.vat[p]).toLocaleString() : ''}" onfocus="this.value=this.value.replace(/,/g,'')" onblur="finVat('${p}',this)" ${key()}></div>`).join('')}</div></div>
+        <div class="fin-sec-hd"><div class="bd-title">會計每期請款</div><small>營業稅全年</small><b style="color:#AAA" data-live>${money(vatSum)}</b></div>
+        <div class="fin-vat-note">營業稅是代收再轉交國稅局的，<b style="color:#888">不算成本</b>；雜支（郵資、發票本）會算進營運成本。</div>
+        <div class="fin-body">${ac.map(accRow).join('')}
+          <div class="acc-pend-hd">還沒報的進項發票<small>交給會計前先記在這</small><b data-live>${pendSum ? `可抵 ${money(pendSum)}` : ''}</b></div>
+          ${pend.map(pendRow).join('')}<button class="fin-add" onclick="finPendAdd()">＋ 新增</button>
+        </div>
       </div>`;
     const banner = (!db || !session) ? '' : fin.cloud ? '' : `<div class="fin-banner">財務資料的雲端資料表還沒建立，目前只存在這台裝置上，換手機或清除瀏覽器資料就看不到了。</div>`;
     const keep = document.activeElement && wrap.contains(document.activeElement) ? null : [...wrap.querySelectorAll('.fin-body')].map(b => b.scrollTop);
@@ -3691,7 +3870,7 @@
         <div class="yr-card"><div class="yr-label">− 營運成本（全年）</div><div class="yr-value c-expense">${money(op)}</div></div>
       </div>
 </div>
-      <div class="fin-grid">${monthsCard}${card(G('month'))}${card(G('bimonth'))}${card(G('once'))}${card(G('year'))}${vat}</div>`;
+      <div class="fin-grid">${monthsCard}${card(G('month'))}${accCard}${card(G('once'))}${card(G('year'))}${vat}</div>`;
     if (patch && wrap.firstElementChild) {
       const tmp = document.createElement('div'); tmp.innerHTML = html;
       const a = wrap.querySelectorAll('[data-live]'), b = tmp.querySelectorAll('[data-live]');
