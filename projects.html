@@ -496,6 +496,10 @@
     .b-inv-已寄出{background:#E3F2FD;color:#1565C0}
     .b-inv-頭款已開{background:#E3F2FD;color:#1565C0}
     .b-inv-尾款已開{background:#3F7FD0;color:#FFF}
+    .b-inv-全款已開{background:#3F7FD0;color:#FFF}
+    .pm-seg{display:inline-flex;border:1px solid #E5E5E5;border-radius:999px;overflow:hidden;font-size:0.78rem;margin-left:auto}
+    .pm-seg button{border:0;background:none;padding:3px 10px;color:#AAA;cursor:pointer;font:inherit}
+    .pm-seg button.on{background:#1A1A1A;color:#FFF}
     .gcal-btn { background: none; border: none; cursor: pointer; padding: 2px 4px; border-radius: 4px; display: inline-flex; align-items: center; opacity: 0.55; transition: opacity 0.15s; flex-shrink: 0; }
     .gcal-btn:hover { opacity: 1; background: #E8F0FE; }
     #cl-modal { z-index: 610; }
@@ -1597,11 +1601,23 @@
     {sep:true},
     {value:'', cls:'', label:'清除'},
   ];
+  // 一次付清的案子只有一張發票：未開／全款已開
+  const INVOICE_FULL_DD_ITEMS = [
+    {header:'發票狀態'},
+    {value:'未開',   cls:'b-inv-未開',   dot:'', label:'未開'},
+    {value:'全款已開', cls:'b-inv-全款已開', dot:'', label:'全款已開'},
+    {sep:true},
+    {value:'', cls:'', label:'清除'},
+  ];
   const PAY_DD_ITEMS = [
     {header:'付款狀態'},{value:'未收款',cls:'b-pay-未收款',label:'未收款'},{value:'已收頭款',cls:'b-pay-已收頭款',label:'已收頭款'},
     {value:'部分付款',cls:'b-pay-部分付款',label:'部分付款'},{value:'已結清',cls:'b-pay-已結清',label:'已結清'},
     {value:'互惠',cls:'b-pay-互惠',label:'互惠'},
   ];
+  // 一次付清沒有頭款，付款選單拿掉「已收頭款」
+  const PAY_FULL_DD_ITEMS = PAY_DD_ITEMS.filter(x => x.value !== '已收頭款');
+  const invItems = id => isFull(cases.find(x=>x.id===id) || {}) ? INVOICE_FULL_DD_ITEMS : INVOICE_DD_ITEMS;
+  const payItems = id => isFull(cases.find(x=>x.id===id) || {}) ? PAY_FULL_DD_ITEMS : PAY_DD_ITEMS;
   const TASK_STATUS_ITEMS = [
     {header:'狀態'},{value:'未開始',cls:'b-task-未開始',label:'未開始'},
     {value:'進行中',cls:'b-task-進行中',label:'進行中'},{value:'已完成',cls:'b-task-已完成',label:'已完成'},
@@ -1627,7 +1643,8 @@
     const c = cases.find(x=>x.id===id); if (!c) return;
     const patch = { [field]: value };
     if (field === 'payment_status') {
-      const inv = PAY_TO_INVOICE[payLabel(value)];
+      let inv = PAY_TO_INVOICE[payLabel(value)];
+      if (isFull(c) && inv === '尾款已開') inv = '全款已開';
       if (inv && inv !== c.invoice) { patch.invoice = inv; showToast('發票跟著改為' + inv + ' ✓'); }
       // 退回未收款：頭款、尾款的收款日期都清掉；退回已收頭款：清掉尾款的收款日期
       const lbl = payLabel(value);
@@ -1905,12 +1922,34 @@
   }
   function setMeta(key, value) {
     const c = cases.find(x=>x.id===viewingId); if (!c) return;
-    const meta = { type:'meta', source: caseMeta(c).source || '', lost: caseMeta(c).lost || '', got: caseMeta(c).got || '', [key]: value || '' };
+    const m = caseMeta(c);
+    const meta = { type:'meta', source: m.source || '', lost: m.lost || '', got: m.got || '', full: m.full || '', [key]: value || '' };
     const all = parseTasks(c.tasks).filter(t=>t.type!=='meta');
-    c.tasks = JSON.stringify((meta.source || meta.lost || meta.got) ? [...all, meta] : all);
+    c.tasks = JSON.stringify((meta.source || meta.lost || meta.got || meta.full) ? [...all, meta] : all);
     syncTasks(c); renderAll(); renderPanel();
   }
-  function caseReceived(c) { return Number(casePayment(c).received) || 0; }
+  // 收款方式：預設分兩期（頭款＋尾款）；一次付清的存在 meta.full，只有一筆全款、一個收款日期、一張發票
+  function isFull(c) { return caseMeta(c).full === '1'; }
+  // 切換收款方式：改成一次付清時，頭款金額清掉、頭款日期搬到全款日期（全款沒填的話），發票、付款跟著換成對應的名稱
+  function setPayMode(full) {
+    const c = cases.find(x=>x.id===viewingId); if (!c || isFull(c) === full) return;
+    if (full) {
+      const d1 = caseDepositDate(c);
+      c.tasks = paymentTasks(c, { received: 0, date1: '', ...(d1 && !casePaidDate(c) ? { date: d1 } : {}) });
+    }
+    setMeta('full', full ? '1' : '');
+    const patch = {};
+    if (full && c.invoice === '尾款已開') patch.invoice = '全款已開';
+    if (full && c.invoice === '頭款已開') patch.invoice = '未開';
+    if (!full && c.invoice === '全款已開') patch.invoice = '尾款已開';
+    if (full && payLabel(c.payment_status) === '已收頭款') patch.payment_status = casePaidDate(c) ? '已結清' : '未收款';
+    if (Object.keys(patch).length) {
+      Object.assign(c, patch); saveLocal(); renderAll(); renderPanel();
+      if (db) { setSyncDot('loading'); db.from('cases').update(patch).eq('id',c.id).then(({error})=>setSyncDot(error?'err':'ok')); }
+    }
+    showToast(full ? '改成一次付清 ✓' : '改成分兩期 ✓');
+  }
+  function caseReceived(c) { return isFull(c) ? 0 : Number(casePayment(c).received) || 0; }
   // 收款日期分頭款（date1）和尾款（date）；全年收入的入帳月份、客戶付款速度都看尾款那一天
   function casePaidDate(c) { return casePayment(c).date || ''; }
   function caseDepositDate(c) { return casePayment(c).date1 || ''; }
@@ -1948,6 +1987,7 @@
   // 已收金額那一列：左邊頭款、右邊尾款（＝報價 − 頭款）。
   // 頭款有填就用填的；沒填的話，未收款／已收頭款／已結清都先顯示報價的一半
   function shownReceived(c) {
+    if (isFull(c)) return 0;
     const auto = ['未收款','已收頭款','已結清'].includes(payLabel(c.payment_status));
     return caseReceived(c) || (auto ? Math.round((Number(c.quote_amount)||0) * DEPOSIT_RATE) : 0);
   }
@@ -1961,7 +2001,7 @@
     if (!q || c.payment_status === '互惠') return '';
     const tail = Math.max(q - shownReceived(c), 0);
     const pending = c.payment_status !== '已結清' && !casePaidDate(c);
-    return `尾款 $${tail.toLocaleString()}${pending ? '（待收）' : ''}`;
+    return `${isFull(c) ? '全款' : '尾款'} $${tail.toLocaleString()}${pending ? '（待收）' : ''}`;
   }
   const depositColor = c => depositHintHTML(c) ? '#AAA' : '#1A1A1A'; // 頭款還沒收：整段跟尾款一樣淡灰
   const tailColor = c => dueHintHTML(c).includes('待收') ? '#AAA' : '#1A1A1A'; // 尾款收到了（已結清或填了尾款日期）就變黑
@@ -3943,12 +3983,12 @@
             <span class="b-dot bd-${status}"></span>${status}
           </span>
         </div>
-        <div class="td" onclick="event.stopPropagation();showInlineDD(this,INVOICE_DD_ITEMS,v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
+        <div class="td" onclick="event.stopPropagation();showInlineDD(this,invItems('${c.id}'),v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
           ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD;font-size:0.8rem">—</span>'}
         </div>
         <div class="td td-date" style="cursor:pointer" onclick="event.stopPropagation();showDateRangePicker(this,'${c.id}')">${date||'<span style="color:#DDD">選擇日期</span>'}</div>
         <div class="td">
-          <span class="badge b-pay-${payLabel(c.payment_status)||'未收款'}" onclick="event.stopPropagation();showInlineDD(this,PAY_DD_ITEMS,v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)||'未收款'}</span>
+          <span class="badge b-pay-${payLabel(c.payment_status)||'未收款'}" onclick="event.stopPropagation();showInlineDD(this,payItems('${c.id}'),v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)||'未收款'}</span>
         </div>
         <div class="td">
           <span class="badge b-pri-${pri}" onclick="event.stopPropagation();showInlineDD(this,PRIORITY_DD_ITEMS,v=>updateField('${c.id}','priority',v))">${pri}</span>
@@ -4061,7 +4101,7 @@
         </div>` : ''}
         <div class="prop-row">
           <div class="prop-label">發票</div>
-          <div class="prop-value" onclick="showInlineDD(this,INVOICE_DD_ITEMS,v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
+          <div class="prop-value" onclick="showInlineDD(this,invItems('${c.id}'),v=>updateField('${c.id}','invoice',v))" style="cursor:pointer">
             ${c.invoice ? `<span class="badge b-inv-${c.invoice}">${c.invoice}</span>` : '<span style="color:#DDD">點擊設定</span>'}
           </div>
         </div>
@@ -4109,21 +4149,24 @@
         </div>
         <div class="prop-row">
           <div class="prop-label">付款</div>
-          <div class="prop-value">${c.payment_status?`<span class="badge b-pay-${payLabel(c.payment_status)}" onclick="showInlineDD(this,PAY_DD_ITEMS,v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)}</span>`:'—'}</div>
+          <div class="prop-value" style="display:flex;align-items:center;gap:8px">${c.payment_status?`<span class="badge b-pay-${payLabel(c.payment_status)}" onclick="showInlineDD(this,payItems('${c.id}'),v=>updateField('${c.id}','payment_status',v))">${payLabel(c.payment_status)}</span>`:'—'}
+            ${c.payment_status==='互惠'?'':`<span class="pm-seg" title="這個案子怎麼收款"><button class="${isFull(c)?'':'on'}" onclick="setPayMode(false)">分兩期</button><button class="${isFull(c)?'on':''}" onclick="setPayMode(true)">一次付清</button></span>`}</div>
         </div>
         <div class="prop-row">
           <div class="prop-label">已收金額</div>
-          <div class="prop-value pay-row">
+          <div class="prop-value pay-row">${isFull(c) ? `
+            <span id="due-hint" style="color:${tailColor(c)};white-space:nowrap">${dueHintHTML(c)}</span>` : `
             <div class="pay-col" style="display:flex;align-items:center;gap:8px">${c.payment_status==='互惠'?'':`<span class="prop-plain" id="dep-label" style="flex-shrink:0;color:${depositColor(c)}">頭款</span>`}
             <input class="prop-input" style="flex-shrink:0;width:${receivedWidth(c)};color:${depositColor(c)}" inputmode="numeric" placeholder="添加" value="${receivedText(c)}" onfocus="this.value=this.value.replace(/[$,]/g,'');this.style.width='96px'" onblur="saveReceived(this)" onkeydown="if(event.key==='Enter'&&!event.isComposing)this.blur()"><span id="dep-hint" style="font-size:0.83rem;color:#AAA;white-space:nowrap;margin-left:-20px">${depositHintHTML(c)}</span></div>
-            <span id="due-hint" style="font-size:0.83rem;color:${tailColor(c)};white-space:nowrap">${dueHintHTML(c)}</span>
+            <span id="due-hint" style="font-size:0.83rem;color:${tailColor(c)};white-space:nowrap">${dueHintHTML(c)}</span>`}
           </div>
         </div>
         <div class="prop-row">
           <div class="prop-label">收款日期</div>
-          <div class="prop-value pay-row">
+          <div class="prop-value pay-row">${isFull(c) ? `
+            <span class="prop-plain" style="cursor:pointer;white-space:nowrap" title="全款收款日期" onclick="showSingleDatePicker(this,'${casePaidDate(c)}',v=>savePaidDate(v))">${fmtDate(casePaidDate(c))||'<span style="color:#DDD">全款</span>'}</span>` : `
             <span class="prop-plain pay-col pay-date${caseDepositDate(c)?' filled':''}" data-l="頭款" style="cursor:pointer;white-space:nowrap" title="頭款收款日期" onclick="showSingleDatePicker(this,'${caseDepositDate(c)}',v=>savePaidDate(v,'date1'))">${fmtDate(caseDepositDate(c))||'<span style="color:#DDD">頭款</span>'}</span>
-            <span class="prop-plain pay-date${casePaidDate(c)?' filled':''}" data-l="尾款" style="cursor:pointer;flex:1;white-space:nowrap" title="尾款收款日期" onclick="showSingleDatePicker(this,'${casePaidDate(c)}',v=>savePaidDate(v))">${fmtDate(casePaidDate(c))||'<span style="color:#DDD">尾款</span>'}</span>
+            <span class="prop-plain pay-date${casePaidDate(c)?' filled':''}" data-l="尾款" style="cursor:pointer;flex:1;white-space:nowrap" title="尾款收款日期" onclick="showSingleDatePicker(this,'${casePaidDate(c)}',v=>savePaidDate(v))">${fmtDate(casePaidDate(c))||'<span style="color:#DDD">尾款</span>'}</span>`}
           </div>
         </div>
       </div>
